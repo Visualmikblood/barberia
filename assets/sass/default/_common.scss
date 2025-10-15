@@ -1,0 +1,464 @@
+/*==========================================================================
+Common Css
+==========================================================================*/
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arima+Madurai:wght@400;500;700;800;900&display=swap');
+body {
+	font-family: var(--body-font);
+	color: var(--body-color);
+	font-size: 16px;
+	line-height: 26px;
+  	font-weight: 400;
+}
+img {
+	max-width: 100%;
+	height: auto;
+	transition: all 0.4s ease-out 0s;
+}
+a {
+  outline: none;
+  color: inherit;
+  text-decoration: none;
+}
+a,
+button,
+i {
+	text-decoration: none;
+	color: inherit;
+}
+a:focus,
+a:hover {
+	text-decoration: none;
+	color: inherit;
+}
+.section-padding {
+	padding: 150px 0px;
+}
+@media (max-width: 575px) {
+	.section-padding {
+		padding: 90px 0px;
+	}
+}
+.display-none {
+	display: none;
+}
+.img__full {
+	width: 100%;
+}
+/*==========================================================================
+Form
+==========================================================================*/
+button,
+input[type="button"],
+input[type="reset"],
+input[type="submit"] {
+	border: 1px solid var(--border-color-1);
+	border-color: transparent;
+	border-radius: 0px;
+	background: var(--primary-color);
+	color: var(--white);
+	padding: 19px 38px 15px 38px;
+}
+button:hover,
+input[type="button"]:hover,
+input[type="reset"]:hover,
+input[type="submit"]:hover {
+  	border-color: transparent;
+}
+button:active,
+button:focus,
+input[type="button"]:active,
+input[type="button"]:focus,
+input[type="reset"]:active,
+input[type="reset"]:focus,
+input[type="submit"]:active,
+input[type="submit"]:focus {
+  	border-color: transparent;
+}
+input[type="text"],
+input[type="email"],
+input[type="url"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="range"],
+input[type="date"],
+input[type="month"],
+input[type="week"],
+input[type="time"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="color"],
+textarea {
+	color: var(--body-color);
+	border: 1px solid;
+	border-radius: 0px;
+	width: 100%;
+	height: 60px;
+	border: 1px solid var(--border-color-1);
+	padding-left: 20px;  
+}
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="url"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="range"]:focus,
+input[type="date"]:focus,
+input[type="month"]:focus,
+input[type="week"]:focus,
+input[type="time"]:focus,
+input[type="datetime"]:focus,
+input[type="datetime-local"]:focus,
+input[type="color"]:focus,
+textarea:focus {
+	color: var(--heading-color);
+	outline: none;
+	box-shadow: none;
+	border-color: var(--primary-color);
+}
+select {
+	border: 1px solid var(--border-color-1);
+}
+textarea {
+	width: 100%;
+	height: 150px;
+	padding-top: 15px;
+}
+button,
+button:hover,
+button:focus {
+	box-shadow: none;
+	border: none;
+	outline: none;
+}
+/*==========================================================================
+Hedging CSS
+==========================================================================*/
+$list: (h1, 80px, 100px, 0, 0, var(--heading-color), var(--heading-font), 900),
+(h2, 48px, 60px, 0, 0, var(--heading-color), var(--heading-font), 800),
+(h3, 30px, 40px, 0, 0, var(--heading-color), var(--heading-font), 900),
+(h4, 24px, 34px, 0, 0, var(--heading-color), var(--heading-font), 900),
+(h5, 20px, 30px, 0, 0, var(--heading-color), var(--heading-font), 900),
+(h6, 18px, 28px, 0, 0, var(--heading-color), var(--heading-font), 900);
+@each $name, $size, $height, $p, $m, $color, $font, $weight in $list {
+    #{$name}{
+      font-size: $size;
+      line-height: $height;
+      padding: $p;
+      margin: $m;
+      color: $color;
+      font-family: $font;
+      font-weight: $weight;
+    }
+}
+$list: left, center, right;
+@each $i in $list {
+    .t-#{$i} {
+        text-align: $i;
+    }
+}
+@media (max-width: 991px) {
+	h2 {
+		font-size: 42px;
+		line-height: 52px;
+	}
+}
+@media (max-width: 575px) {
+	h2 {
+		font-size: 30px;
+		line-height: 40px;
+	}
+}
+@media (max-width: 374px) {
+	h2 {
+		font-size: 28px;
+		line-height: 38px;
+	}
+}
+/*==========================================================================
+Theme Btn CSS
+==========================================================================*/
+.theme-btn,
+.theme-banner-btn,
+.theme-border-btn {
+	background: var(--primary-color);
+	color: var(--white);
+	display: inline-flex;
+	align-items: center;
+	font-size: 16px;
+	padding: 19px 38px 15px 38px;
+	text-align: center;
+	font-weight: 900;
+	font-family: var(--heading-font);
+	z-index: 3;
+	position: relative;
+	transition: all 0.4s ease-out 0s;
+	text-transform: uppercase;
+	overflow: hidden;
+    &::after {
+        position: absolute;
+        content: '';
+        position: absolute;
+        width: 3px;
+		transition: all 0.5s ease-out 0s;
+        height: 3px;
+        top: 50%;
+        left: 50%;
+		background: var(--heading-color);
+		transform: translate(-50%, -50%) scale(1);
+		margin: 0 auto;
+        z-index: -1;
+		border-radius: 50%;
+		opacity: 0;
+    }
+	i {
+		margin-left: 10px;
+		position: relative;
+		bottom: 2px;
+	}
+    &:hover {
+        color: var(--white);
+        &::after {
+			width: 100%;
+			height: 100%;
+			transform: translate(-50%, -50%) scale(1.5);
+			opacity: 1;
+        }
+    }
+	&:focus {
+		color: var(--white);
+	}
+}
+.theme-banner-btn {
+	&::after {
+		background: var(--white);
+	}
+	&:hover {
+		color: var(--primary-color);
+	}
+}
+.theme-border-btn {
+	color: var(--primary-color);
+	background: transparent;
+	border: 1px solid var(--primary-color);
+	padding: 18px 38px 14px 38px;
+	&::after {
+		background: var(--white);
+	}
+	&:hover {
+		color: var(--primary-color);
+		border-color: var(--white);
+	}
+}
+.simple-btn {
+	display: inline-block;
+	color: var(--heading-color);
+	font-weight: 900;
+    font-family: var(--heading-font);	
+	transition: all 0.4s ease-in-out;
+	text-transform: uppercase;
+	i {
+		margin-left: 8px;
+	}
+	&:hover {
+		color: var(--primary-color);
+	}
+}
+.subtitle__one {
+	display: inline-block;
+	position: relative;
+	font-weight: 900;
+	color: var(--primary-color);
+	text-transform: capitalize;
+	font-size: 18px;
+	line-height: 28px;
+	margin-bottom: 10px;
+	font-family: var(--heading-font);
+}
+.subtitle__two {
+	display: block;
+	position: relative;
+	color: var(--heading-color);
+	text-transform: capitalize;
+	font-size: 150px;
+	line-height: 160px;
+	font-family: var(--heading-font);
+	opacity: 0.04;
+	margin: 0 0 -125px 0;
+	z-index: -1;
+}
+@media (max-width: 991px) {
+	.subtitle__two {
+		font-size: 120px;
+		line-height: 130px;
+		margin: 0 0 -100px 0;
+	}
+}
+@media (max-width: 767px) {
+	.subtitle__two {
+		font-size: 90px;
+		line-height: 100px;
+		margin: 0 0 -70px 0;
+	}
+}
+@media (max-width: 490px) {
+	.subtitle__two {
+		font-size: 65px;
+		line-height: 75px;
+		margin: 0 0 -55px 0;
+	}
+}
+@media (max-width: 359px) {
+	.subtitle__two {
+		font-size: 56px;
+		line-height: 66px;
+		margin: 0 0 -50px 0;
+	}
+}
+@keyframes rotate {
+	100% {
+		transform: rotate(90deg);
+	}
+}
+/*==========================================================================
+Scroll Top CSS
+==========================================================================*/
+.scroll-up {
+	cursor: pointer;
+	display: block;
+	border-radius: 50px;
+	box-shadow: inset  0 0 0 2px var(--color-3);
+	z-index: 10000;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(15px);
+	position: fixed;
+	right: 20px;
+	bottom: 20px;
+	height: 50px;
+	width: 50px;
+    transition: all 200ms linear;
+	&::after {
+		position: absolute;
+		font-family: 'Font Awesome 5 Pro';
+		content: "\f176";
+		text-align: center;
+		line-height: 50px;
+		font-size: 24px;
+		color: var(--primary-color);
+		left: 0;
+		top: 0;
+		font-size: 20px;
+		height: 50px;
+		width: 50px;
+		cursor: pointer;
+		display: block;
+		z-index: 1;
+		transition: all 200ms linear;
+	}
+	&.active-scroll {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY(0);
+	}
+	svg path { 
+		fill: none; 
+	}
+	svg.scroll-circle path {
+		stroke: var(--primary-color);
+		stroke-width: 4;
+		box-sizing:border-box;
+		transition: all 200ms linear;
+	}
+}
+/*==========================================================================
+Preloader CSS
+========================================================================== */
+.spinner {
+	width: 80px;
+	height: 80px;
+	position: relative;
+	margin: 100px auto;
+}
+.double-bounce1,
+.double-bounce2 {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	background-color: var(--white);
+	opacity: 0.6;
+	position: absolute;
+	top: 0;
+	left: 0;
+	animation: sk-bounce 2.0s infinite ease-in-out;
+}
+.double-bounce2 {
+	animation-delay: -1.0s;
+}
+@keyframes sk-bounce {
+	0%, 100% {
+		transform: scale(0.0);
+		-webkit-transform: scale(0.0);
+	}
+	50% {
+		transform: scale(1.0);
+		-webkit-transform: scale(1.0);
+	}
+}
+.theme-loader {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	background: var(--heading-color);
+	z-index: 9999999999;
+}
+.theme-loader .spinner {
+	left: 50%;
+	top: 50%;
+	margin-left: -40px;
+	margin-top: -40px;
+}
+/*==========================================================================
+Video Animation CSS
+==========================================================================*/
+.video-pulse::after, .video-pulse::before {
+	position: absolute;
+	content: "";
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--white);
+	left: 0;
+	top: 0;
+	border-radius: 50%;
+	animation-duration: 2.5s;
+	animation-timing-function: linear;
+	animation-name: video-animation;
+	animation-iteration-count: infinite;
+}
+.video-pulse::before {
+	animation-delay: 1s;
+}
+@keyframes video-animation {
+    0% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.2;
+        transform: scale(1.5);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(2);
+    }
+}
+.swiper-button-prev::after {
+	display: none;
+}
+.swiper-button-next::after {
+	display: none;
+}

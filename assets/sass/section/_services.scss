@@ -1,0 +1,307 @@
+/*==========================================================================
+Services
+==========================================================================*/
+.services__area {
+    background: var(--color-4);
+    position: relative;
+    z-index: 1;
+    &-title {
+        text-align: center;
+        h2 {
+            max-width: 500px;
+            margin: 0 auto;            
+        }
+    }
+    &-shape {
+        position: absolute;
+        z-index: -1;
+        bottom: 0;
+        right: 0;
+    }
+    &-right {
+        &-title {
+            h3 {
+                max-width: 330px;         
+            }
+            p {
+                margin-top: 20px;
+                margin-bottom: 30px;
+            }
+            &-list {
+                span {
+                    display: flex;
+                    align-items: center;
+                    font-family: var(--heading-font);
+                    font-weight: 700;
+                    margin-bottom: 20px;
+                    i {
+                        width: 24px;
+                        height: 24px;
+                        font-size: 12px;
+                        line-height: 24px;
+                        background: var(--color-7);
+                        display: inline-block;
+                        margin-right: 10px;
+                        text-align: center;
+                        border-radius: 50%;
+                        color: var(--primary-color);                    
+                    }
+                    &:last-child {
+                        margin: 0;
+                    }
+                }
+            }
+        }        
+    }
+    &-button {
+        margin-left: -7px;
+        margin-right: -11px;
+        ul {
+            justify-content: center;
+        }
+        & .nav-item {
+            button {
+                background: var(--white);
+                color: var(--heading-color);
+                font-family: var(--heading-font);
+                font-size: 20px;
+                font-weight: 900;
+                padding: 30px 20px;
+                width: 190px;
+                margin: 14px;
+                position: relative;
+            }
+            &-button {
+                background: var(--white);
+                color: var(--heading-color);
+                font-family: var(--heading-font);
+                font-size: 20px;
+                font-weight: 900;
+                padding: 30px 20px;
+                width: 190px;
+                margin: 14px;
+                position: relative;
+                &-icon {
+                    display: block;
+                    margin-bottom: 25px;
+                    padding: 0 45px;
+                }
+                &-icon2 {
+                    position: absolute;
+                    top: 30px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 1;
+                    opacity: 0;
+                }
+            }
+            & .active {
+                background: var(--primary-color);
+                color: var(--white);
+                & .nav-item-button-icon2 {
+                    opacity: 1;
+                }
+            }
+        }
+    }
+}
+/*==========================================================================
+Services Two
+==========================================================================*/
+.services__two {
+    background: var(--color-4);
+    position: relative;
+    z-index: 1;
+    &::after {
+        position: absolute; 
+        content: '';
+        width: 100%;
+        height: 140px;
+        background: var(--heading-color);
+        bottom: 0;
+        left: 0;
+        z-index: -1;
+    }
+    &-right {
+        &-title {
+            h2 {
+                max-width: 450px;
+                margin-bottom: 30px;
+            }
+        }
+        &-item {
+            background: var(--white);
+            border: 1px solid var(--white);
+            padding: 40px;
+            transition: all 0.4s ease-out 0s;
+            &-icon {
+                margin-bottom: 35px;
+                position: relative;
+                z-index: 1;
+                &::after {
+                    position: absolute; 
+                    content: '';
+                    width: 50px;
+                    height: 50px;
+                    background: var(--primary-color);
+                    opacity: 0.1;
+                    top: 20px;
+                    left: 20px;
+                    border-radius: 50%;
+                }
+            }
+            &-content {
+                h4 {
+                    margin-bottom: 10px;
+                    a {
+                        transition: all 0.4s ease-out 0s;
+                        &:hover {
+                            color: var(--primary-color);
+                        }
+                    }
+                }
+                p {
+                    margin: 0;
+                }
+            }
+            &:hover {
+                border-color: var(--primary-color);
+            }
+        }
+    }
+}
+/*==========================================================================
+Services Three
+==========================================================================*/
+.services__three {
+    background: var(--color-10);
+    &-title {
+        text-align: center;
+        h2 {
+            color: var(--white);
+        }
+    }
+    &-item {
+        background: var(--heading-color);
+        border: 1px solid var(--heading-color);
+        padding: 40px;
+        transition: all 0.4s ease-out 0s;
+        &-icon {
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+            &::after {
+                position: absolute; 
+                content: '';
+                width: 50px;
+                height: 50px;
+                background: var(--color-11);
+                top: 20px;
+                left: 20px;
+                border-radius: 50%;
+                z-index: -1;
+            }
+        }
+        &-content {
+            h4 {
+                margin-bottom: 10px;
+                a {
+                    transition: all 0.4s ease-out 0s;
+                    color: var(--white);
+                    &:hover {
+                        color: var(--primary-color);
+                    }
+                }
+            }
+            p {
+                color: var(--white);
+                margin-bottom: 30px;
+            }
+            .simple-btn {
+                color: var(--color-1);
+                &:hover {
+                    color: var(--primary-color);
+                }
+            }
+        }
+        &:hover {
+            border-color: var(--primary-color);
+        }
+    }
+}
+/*==========================================================================
+Services Three
+==========================================================================*/
+.services__page {
+    position: relative;
+    z-index: 1;
+    &::after {
+        position: absolute; 
+        content: '';
+        width: 100%;
+        height: 140px;
+        background: var(--heading-color);
+        bottom: 0;
+        left: 0;
+        z-index: -1;
+    }
+    &-item {
+        background: var(--white);
+        border: 1px solid var(--white);
+        box-shadow: var(--box-shadow-4);
+        padding: 40px;
+        transition: all 0.4s ease-out 0s;
+        &-icon {
+            margin-bottom: 35px;
+            position: relative;
+            z-index: 1;
+            &::after {
+                position: absolute; 
+                content: '';
+                width: 50px;
+                height: 50px;
+                background: var(--color-6);
+                top: 20px;
+                left: 20px;
+                border-radius: 50%;
+                z-index: -1;
+            }
+        }
+        &-content {
+            h4 {
+                margin-bottom: 10px;
+                a {
+                    transition: all 0.4s ease-out 0s;
+                    &:hover {
+                        color: var(--primary-color);
+                    }
+                }
+            }
+            p {
+                margin-bottom: 30px;
+            }
+        }
+        &:hover {
+            border-color: var(--primary-color);
+        }
+    }
+}
+@media (max-width: 450px) {
+    .services__area {
+        &-button {
+            & .nav-item {
+                button {
+                    font-size: 16px;
+                    width: 160px;
+                    margin: 8px;
+                }
+                &-button {
+                    &-icon {
+                        margin-bottom: 20px;
+                        padding: 0 30px;
+                    }
+                }
+            }
+        }
+    }
+}
