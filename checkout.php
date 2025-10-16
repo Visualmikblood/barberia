@@ -108,7 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<!-- Mean menu -->
 	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="assets/sass/style.css">
+	<link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body>
