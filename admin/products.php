@@ -17,25 +17,84 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['add_product'])) {
+        // Handle image uploads
+        $image_path = '';
+        $gallery_paths = [];
+
+        // Upload main image
+        if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] == 0) {
+            $upload_dir = '../assets/img/products/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            $file_extension = pathinfo($_FILES['image_file']['name'], PATHINFO_EXTENSION);
+            $file_name = 'product_' . time() . '_main.' . $file_extension;
+            $target_path = $upload_dir . $file_name;
+
+            if (move_uploaded_file($_FILES['image_file']['tmp_name'], $target_path)) {
+                $image_path = 'assets/img/products/' . $file_name;
+            }
+        }
+
+        // Upload gallery images
+        if (isset($_FILES['gallery_files']) && !empty($_FILES['gallery_files']['name'][0])) {
+            $upload_dir = '../assets/img/products/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            foreach ($_FILES['gallery_files']['tmp_name'] as $key => $tmp_name) {
+                if ($_FILES['gallery_files']['error'][$key] == 0) {
+                    $file_extension = pathinfo($_FILES['gallery_files']['name'][$key], PATHINFO_EXTENSION);
+                    $file_name = 'product_' . time() . '_gallery_' . $key . '.' . $file_extension;
+                    $target_path = $upload_dir . $file_name;
+
+                    if (move_uploaded_file($tmp_name, $target_path)) {
+                        $gallery_paths[] = 'assets/img/products/' . $file_name;
+                    }
+                }
+            }
+        }
+
         // Add new product
         $name = trim($_POST['name']);
+        $short_description = trim($_POST['short_description']);
         $description = trim($_POST['description']);
         $price = floatval($_POST['price']);
+        $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
         $category = trim($_POST['category']);
         $stock = intval($_POST['stock']);
-        $sku = trim($_POST['sku']) ?: 'PRD-' . time();
+        $sku = trim($_POST['sku']);
+        $stock_status = $_POST['stock_status'] ?? 'instock';
+        $weight = !empty($_POST['weight']) ? floatval($_POST['weight']) : null;
+        $dimensions = trim($_POST['dimensions']);
+        $brand = trim($_POST['brand']);
+        $tags = trim($_POST['tags']);
+        $gallery_images = !empty($gallery_paths) ? json_encode($gallery_paths) : null;
+        $featured = isset($_POST['featured']) ? 1 : 0;
 
-        if (empty($name) || $price <= 0) {
-            $message = '<div class="alert alert-danger">Nombre y precio son obligatorios</div>';
+        if (empty($name) || $price <= 0 || empty($sku)) {
+            $message = '<div class="alert alert-danger">Nombre, precio y SKU son obligatorios</div>';
         } else {
-            $query = "INSERT INTO products (name, description, price, category, stock, sku) VALUES (:name, :description, :price, :category, :stock, :sku)";
+            $query = "INSERT INTO products (name, short_description, description, price, sale_price, category, stock, sku, stock_status, weight, dimensions, brand, tags, image, gallery_images, featured) VALUES (:name, :short_description, :description, :price, :sale_price, :category, :stock, :sku, :stock_status, :weight, :dimensions, :brand, :tags, :image, :gallery_images, :featured)";
             $stmt = $db->prepare($query);
             $stmt->bindParam(":name", $name);
+            $stmt->bindParam(":short_description", $short_description);
             $stmt->bindParam(":description", $description);
             $stmt->bindParam(":price", $price);
+            $stmt->bindParam(":sale_price", $sale_price);
             $stmt->bindParam(":category", $category);
             $stmt->bindParam(":stock", $stock);
             $stmt->bindParam(":sku", $sku);
+            $stmt->bindParam(":stock_status", $stock_status);
+            $stmt->bindParam(":weight", $weight);
+            $stmt->bindParam(":dimensions", $dimensions);
+            $stmt->bindParam(":brand", $brand);
+            $stmt->bindParam(":tags", $tags);
+            $stmt->bindParam(":image", $image_path);
+            $stmt->bindParam(":gallery_images", $gallery_images);
+            $stmt->bindParam(":featured", $featured);
 
             if ($stmt->execute()) {
                 $message = '<div class="alert alert-success">Producto agregado exitosamente</div>';
@@ -44,25 +103,87 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
     } elseif (isset($_POST['edit_product'])) {
+        // Handle image uploads for edit
+        $image_path = $edit_product['image'] ?? ''; // Keep existing image if no new one uploaded
+        $gallery_paths = [];
+
+        // Upload main image
+        if (isset($_FILES['image_file']) && $_FILES['image_file']['error'] == 0) {
+            $upload_dir = '../assets/img/products/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            $file_extension = pathinfo($_FILES['image_file']['name'], PATHINFO_EXTENSION);
+            $file_name = 'product_' . time() . '_main.' . $file_extension;
+            $target_path = $upload_dir . $file_name;
+
+            if (move_uploaded_file($_FILES['image_file']['tmp_name'], $target_path)) {
+                $image_path = 'assets/img/products/' . $file_name;
+            }
+        }
+
+        // Upload gallery images (append to existing)
+        $existing_gallery = json_decode($edit_product['gallery_images'] ?? '[]', true) ?: [];
+        if (isset($_FILES['gallery_files']) && !empty($_FILES['gallery_files']['name'][0])) {
+            $upload_dir = '../assets/img/products/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            foreach ($_FILES['gallery_files']['tmp_name'] as $key => $tmp_name) {
+                if ($_FILES['gallery_files']['error'][$key] == 0) {
+                    $file_extension = pathinfo($_FILES['gallery_files']['name'][$key], PATHINFO_EXTENSION);
+                    $file_name = 'product_' . time() . '_gallery_' . $key . '.' . $file_extension;
+                    $target_path = $upload_dir . $file_name;
+
+                    if (move_uploaded_file($tmp_name, $target_path)) {
+                        $existing_gallery[] = 'assets/img/products/' . $file_name;
+                    }
+                }
+            }
+        }
+
         // Edit product
         $id = intval($_POST['product_id']);
         $name = trim($_POST['name']);
+        $short_description = trim($_POST['short_description']);
         $description = trim($_POST['description']);
         $price = floatval($_POST['price']);
+        $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
         $category = trim($_POST['category']);
         $stock = intval($_POST['stock']);
+        $sku = trim($_POST['sku']);
+        $stock_status = $_POST['stock_status'] ?? 'instock';
+        $weight = !empty($_POST['weight']) ? floatval($_POST['weight']) : null;
+        $dimensions = trim($_POST['dimensions']);
+        $brand = trim($_POST['brand']);
+        $tags = trim($_POST['tags']);
+        $gallery_images = !empty($existing_gallery) ? json_encode($existing_gallery) : null;
+        $featured = isset($_POST['featured']) ? 1 : 0;
         $status = $_POST['status'];
 
-        if (empty($name) || $price <= 0) {
-            $message = '<div class="alert alert-danger">Nombre y precio son obligatorios</div>';
+        if (empty($name) || $price <= 0 || empty($sku)) {
+            $message = '<div class="alert alert-danger">Nombre, precio y SKU son obligatorios</div>';
         } else {
-            $query = "UPDATE products SET name = :name, description = :description, price = :price, category = :category, stock = :stock, status = :status WHERE id = :id";
+            $query = "UPDATE products SET name = :name, short_description = :short_description, description = :description, price = :price, sale_price = :sale_price, category = :category, stock = :stock, sku = :sku, stock_status = :stock_status, weight = :weight, dimensions = :dimensions, brand = :brand, tags = :tags, image = :image, gallery_images = :gallery_images, featured = :featured, status = :status WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(":name", $name);
+            $stmt->bindParam(":short_description", $short_description);
             $stmt->bindParam(":description", $description);
             $stmt->bindParam(":price", $price);
+            $stmt->bindParam(":sale_price", $sale_price);
             $stmt->bindParam(":category", $category);
             $stmt->bindParam(":stock", $stock);
+            $stmt->bindParam(":sku", $sku);
+            $stmt->bindParam(":stock_status", $stock_status);
+            $stmt->bindParam(":weight", $weight);
+            $stmt->bindParam(":dimensions", $dimensions);
+            $stmt->bindParam(":brand", $brand);
+            $stmt->bindParam(":tags", $tags);
+            $stmt->bindParam(":image", $image_path);
+            $stmt->bindParam(":gallery_images", $gallery_images);
+            $stmt->bindParam(":featured", $featured);
             $stmt->bindParam(":status", $status);
             $stmt->bindParam(":id", $id);
 
@@ -194,7 +315,7 @@ if ($action == 'edit' && isset($_GET['id'])) {
                             <h5><?php echo $action == 'add' ? 'Agregar Nuevo Producto' : 'Editar Producto'; ?></h5>
                         </div>
                         <div class="card-body">
-                            <form method="POST" enctype="multipart/form-data">
+                            <form method="POST" enctype="multipart/form-data" id="productForm">
                                 <?php if ($action == 'edit'): ?>
                                     <input type="hidden" name="product_id" value="<?php echo $edit_product['id']; ?>">
                                 <?php endif; ?>
@@ -208,34 +329,153 @@ if ($action == 'edit' && isset($_GET['id'])) {
                                     </div>
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label class="form-label">SKU</label>
-                                            <input type="text" class="form-control" name="sku" value="<?php echo htmlspecialchars($edit_product['sku'] ?? ''); ?>" placeholder="Se generará automáticamente">
+                                            <label class="form-label">SKU *</label>
+                                            <input type="text" class="form-control" name="sku" value="<?php echo htmlspecialchars($edit_product['sku'] ?? 'PRD-' . time()); ?>" required>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label class="form-label">Descripción</label>
-                                    <textarea class="form-control" name="description" rows="3"><?php echo htmlspecialchars($edit_product['description'] ?? ''); ?></textarea>
+                                    <label class="form-label">Descripción Corta</label>
+                                    <input type="text" class="form-control" name="short_description" value="<?php echo htmlspecialchars($edit_product['short_description'] ?? ''); ?>" placeholder="Breve descripción para mostrar en la tienda">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Descripción Completa</label>
+                                    <textarea class="form-control" name="description" rows="4"><?php echo htmlspecialchars($edit_product['description'] ?? ''); ?></textarea>
                                 </div>
 
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="mb-3">
-                                            <label class="form-label">Precio *</label>
+                                            <label class="form-label">Precio Regular *</label>
                                             <input type="number" step="0.01" class="form-control" name="price" value="<?php echo $edit_product['price'] ?? ''; ?>" required>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="mb-3">
-                                            <label class="form-label">Stock</label>
-                                            <input type="number" class="form-control" name="stock" value="<?php echo $edit_product['stock'] ?? 0; ?>">
+                                            <label class="form-label">Precio de Oferta</label>
+                                            <input type="number" step="0.01" class="form-control" name="sale_price" value="<?php echo $edit_product['sale_price'] ?? ''; ?>" placeholder="Opcional">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="mb-3">
+                                            <label class="form-label">Stock *</label>
+                                            <input type="number" class="form-control" name="stock" value="<?php echo $edit_product['stock'] ?? 0; ?>" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
                                             <label class="form-label">Categoría</label>
-                                            <input type="text" class="form-control" name="category" value="<?php echo htmlspecialchars($edit_product['category'] ?? ''); ?>">
+                                            <select class="form-control" name="category">
+                                                <option value="">Seleccionar categoría</option>
+                                                <option value="Face Wash" <?php echo ($edit_product['category'] ?? '') == 'Face Wash' ? 'selected' : ''; ?>>Face Wash</option>
+                                                <option value="Face Cream" <?php echo ($edit_product['category'] ?? '') == 'Face Cream' ? 'selected' : ''; ?>>Face Cream</option>
+                                                <option value="Hair Care" <?php echo ($edit_product['category'] ?? '') == 'Hair Care' ? 'selected' : ''; ?>>Hair Care</option>
+                                                <option value="Beard Care" <?php echo ($edit_product['category'] ?? '') == 'Beard Care' ? 'selected' : ''; ?>>Beard Care</option>
+                                                <option value="Hair Styling" <?php echo ($edit_product['category'] ?? '') == 'Hair Styling' ? 'selected' : ''; ?>>Hair Styling</option>
+                                                <option value="Face Care" <?php echo ($edit_product['category'] ?? '') == 'Face Care' ? 'selected' : ''; ?>>Face Care</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Marca</label>
+                                            <input type="text" class="form-control" name="brand" value="<?php echo htmlspecialchars($edit_product['brand'] ?? 'BarbeX'); ?>">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Estado del Stock</label>
+                                            <select class="form-control" name="stock_status">
+                                                <option value="instock" <?php echo ($edit_product['stock_status'] ?? 'instock') == 'instock' ? 'selected' : ''; ?>>En Stock</option>
+                                                <option value="outofstock" <?php echo ($edit_product['stock_status'] ?? 'instock') == 'outofstock' ? 'selected' : ''; ?>>Sin Stock</option>
+                                                <option value="onbackorder" <?php echo ($edit_product['stock_status'] ?? 'instock') == 'onbackorder' ? 'selected' : ''; ?>>En Pedido</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Peso (kg)</label>
+                                            <input type="number" step="0.01" class="form-control" name="weight" value="<?php echo $edit_product['weight'] ?? ''; ?>" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Dimensiones (LxWxH cm)</label>
+                                            <input type="text" class="form-control" name="dimensions" value="<?php echo htmlspecialchars($edit_product['dimensions'] ?? ''); ?>" placeholder="10x5x15">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Tags</label>
+                                            <input type="text" class="form-control" name="tags" value="<?php echo htmlspecialchars($edit_product['tags'] ?? ''); ?>" placeholder="tag1,tag2,tag3">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Imagen Principal</label>
+                                            <input type="file" class="form-control" name="image_file" accept="image/*">
+                                            <small class="form-text text-muted">Seleccionar imagen desde el PC</small>
+                                            <?php if (!empty($edit_product['image'])): ?>
+                                                <div class="mt-2">
+                                                    <img src="../<?php echo htmlspecialchars($edit_product['image']); ?>" alt="Imagen actual" style="max-width: 100px; max-height: 100px;">
+                                                    <p class="text-muted small">Imagen actual</p>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Imágenes de Galería</label>
+                                            <input type="file" class="form-control" name="gallery_files[]" accept="image/*" multiple>
+                                            <small class="form-text text-muted">Seleccionar múltiples imágenes (mantén Ctrl para seleccionar varias)</small>
+                                            <?php if (!empty($edit_product['gallery_images'])): ?>
+                                                <div class="mt-2">
+                                                    <p class="text-muted small">Imágenes actuales:</p>
+                                                    <div class="d-flex flex-wrap gap-2">
+                                                        <?php
+                                                        $gallery = json_decode($edit_product['gallery_images'], true);
+                                                        if (is_array($gallery)) {
+                                                            foreach ($gallery as $img) {
+                                                                echo '<img src="../' . htmlspecialchars($img) . '" alt="" style="width: 50px; height: 50px; object-fit: cover;">';
+                                                            }
+                                                        }
+                                                        ?>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="featured" value="1" <?php echo ($edit_product['featured'] ?? 0) ? 'checked' : ''; ?>>
+                                                <label class="form-check-label">
+                                                    Producto Destacado
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Estado</label>
+                                            <select class="form-control" name="status">
+                                                <option value="active" <?php echo ($edit_product['status'] ?? 'active') == 'active' ? 'selected' : ''; ?>>Activo</option>
+                                                <option value="inactive" <?php echo ($edit_product['status'] ?? 'active') == 'inactive' ? 'selected' : ''; ?>>Inactivo</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -294,18 +534,26 @@ if ($action == 'edit' && isset($_GET['id'])) {
                                             <td><?php echo htmlspecialchars($product['name']); ?></td>
                                             <td><?php echo htmlspecialchars($product['sku']); ?></td>
                                             <td><?php echo htmlspecialchars($product['category']); ?></td>
-                                            <td>$<?php echo number_format($product['price'], 2); ?></td>
+                                            <td>
+                                                $<?php echo number_format($product['price'], 2); ?>
+                                                <?php if ($product['sale_price']): ?>
+                                                    <br><small class="text-muted"><del>$<?php echo number_format($product['sale_price'], 2); ?></del></small>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?php echo $product['stock']; ?></td>
                                             <td>
                                                 <span class="status-badge status-<?php echo $product['status']; ?>">
                                                     <?php echo ucfirst($product['status']); ?>
                                                 </span>
+                                                <?php if ($product['featured']): ?>
+                                                    <br><small class="badge badge-warning">Destacado</small>
+                                                <?php endif; ?>
                                             </td>
                                             <td>
-                                                <a href="?action=edit&id=<?php echo $product['id']; ?>" class="btn btn-sm btn-warning btn-action">
+                                                <a href="?action=edit&id=<?php echo $product['id']; ?>" class="btn btn-sm btn-warning btn-action" title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger btn-action" onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                                                <a href="?delete=<?php echo $product['id']; ?>" class="btn btn-sm btn-danger btn-action" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este producto?')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </td>

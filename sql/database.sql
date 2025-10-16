@@ -2,19 +2,18 @@
 CREATE DATABASE IF NOT EXISTS barbex_shop CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE barbex_shop;
 
--- Tabla de productos
-CREATE TABLE products (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    image VARCHAR(255),
-    category VARCHAR(100),
-    stock INT DEFAULT 0,
-    status ENUM('active', 'inactive') DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+-- Agregar nuevas columnas a la tabla products existente
+ALTER TABLE products
+ADD COLUMN short_description VARCHAR(500) AFTER description,
+ADD COLUMN sale_price DECIMAL(10,2) NULL AFTER price,
+ADD COLUMN gallery_images TEXT COMMENT 'JSON array of image URLs' AFTER image,
+ADD COLUMN tags VARCHAR(255) COMMENT 'Comma separated tags' AFTER category,
+ADD COLUMN sku VARCHAR(100) UNIQUE AFTER tags,
+ADD COLUMN stock_status ENUM('instock', 'outofstock', 'onbackorder') DEFAULT 'instock' AFTER stock,
+ADD COLUMN weight DECIMAL(10,2) NULL AFTER stock_status,
+ADD COLUMN dimensions VARCHAR(100) COMMENT 'LxWxH format' AFTER weight,
+ADD COLUMN brand VARCHAR(100) AFTER dimensions,
+ADD COLUMN featured BOOLEAN DEFAULT FALSE AFTER brand;
 
 -- Tabla de usuarios
 CREATE TABLE users (
@@ -96,16 +95,24 @@ CREATE TABLE order_items (
 -- Nota: Eliminamos TODAS las FK para simplificar y evitar problemas de dependencias
 -- ALTER TABLE order_items ADD CONSTRAINT fk_order_items_product_id FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL;
 
--- Insertar productos de ejemplo
-INSERT INTO products (name, description, price, image, category, stock) VALUES
-('New Fresh Wash', 'Producto de lavado facial premium para una piel fresca y limpia', 56.00, 'assets/img/products/products-1.jpg', 'Face Wash', 50),
-('Face Cream', 'Crema facial hidratante con ingredientes naturales', 51.39, 'assets/img/products/products-2.jpg', 'Face Cream', 30),
-('Hair Treatment', 'Tratamiento capilar profesional para cabello dañado', 63.87, 'assets/img/products/products-3.jpg', 'Hair Care', 25),
-('Shampoo', 'Champú profesional para todo tipo de cabello', 47.89, 'assets/img/products/products-4.jpg', 'Hair Care', 40),
-('Conditioner', 'Acondicionador nutritivo para cabello', 42.50, 'assets/img/products/products-5.jpg', 'Hair Care', 35),
-('Beard Oil', 'Aceite para barba premium', 38.99, 'assets/img/products/products-6.jpg', 'Beard Care', 20),
-('Hair Wax', 'Cera para cabello con fijación fuerte', 29.99, 'assets/img/products/products-7.jpg', 'Hair Styling', 45),
-('Face Mask', 'Máscara facial purificante', 24.50, 'assets/img/products/products-8.jpg', 'Face Care', 60);
+-- Insertar productos de ejemplo con todas las características
+INSERT INTO products (name, description, short_description, price, sale_price, image, gallery_images, category, tags, sku, stock, stock_status, weight, dimensions, brand, featured) VALUES
+('New Fresh Wash', 'Producto de lavado facial premium para una piel fresca y limpia. Contiene ingredientes naturales que limpian profundamente sin resecar la piel. Ideal para uso diario.', 'Lavado facial premium con ingredientes naturales', 56.00, NULL, 'assets/img/products/products-1.jpg', '["assets/img/products/products-1.jpg","assets/img/products/products-11.jpg"]', 'Face Wash', 'limpieza,facial,natural', 'FW-001', 50, 'instock', 0.25, '10x5x15', 'BarbeX', TRUE),
+('Face Cream', 'Crema facial hidratante con ingredientes naturales. Proporciona hidratación profunda y nutrición para todo tipo de piel. Absorción rápida sin dejar residuos grasos.', 'Crema hidratante con ingredientes naturales', 51.39, 45.99, 'assets/img/products/products-2.jpg', '["assets/img/products/products-2.jpg","assets/img/products/products-12.jpg"]', 'Face Cream', 'hidratante,facial,natural', 'FC-002', 30, 'instock', 0.30, '8x8x12', 'BarbeX', FALSE),
+('Hair Treatment', 'Tratamiento capilar profesional para cabello dañado. Repara y fortalece el cabello desde la raíz hasta las puntas. Resultados visibles después del primer uso.', 'Tratamiento profesional para cabello dañado', 63.87, NULL, 'assets/img/products/products-3.jpg', '["assets/img/products/products-3.jpg","assets/img/products/products-13.jpg"]', 'Hair Care', 'tratamiento,dañado,reparador', 'HT-003', 25, 'instock', 0.40, '12x6x18', 'BarbeX', TRUE),
+('Shampoo', 'Champú profesional para todo tipo de cabello. Limpia suavemente mientras nutre y protege el cuero cabelludo. Fórmula sin sulfatos.', 'Champú profesional sin sulfatos', 47.89, NULL, 'assets/img/products/products-4.jpg', '["assets/img/products/products-4.jpg","assets/img/products/products-14.jpg"]', 'Hair Care', 'champú,limpieza,natural', 'SH-004', 40, 'instock', 0.35, '9x7x22', 'BarbeX', FALSE),
+('Conditioner', 'Acondicionador nutritivo para cabello. Proporciona suavidad y brillo excepcional. Facilita el peinado y protege contra el daño térmico.', 'Acondicionador nutritivo para brillo', 42.50, 38.99, 'assets/img/products/products-5.jpg', '["assets/img/products/products-5.jpg","assets/img/products/products-15.jpg"]', 'Hair Care', 'acondicionador,nutritivo,brillo', 'CO-005', 35, 'instock', 0.32, '9x7x22', 'BarbeX', FALSE),
+('Beard Oil', 'Aceite para barba premium. Nutre y suaviza la barba y la piel debajo. Contiene aceites esenciales naturales para un aroma masculino.', 'Aceite premium para barba y piel', 38.99, NULL, 'assets/img/products/products-6.jpg', '["assets/img/products/products-6.jpg"]', 'Beard Care', 'barba,aceite,natural', 'BO-006', 20, 'instock', 0.15, '5x5x10', 'BarbeX', TRUE),
+('Hair Wax', 'Cera para cabello con fijación fuerte. Proporciona estilo duradero sin dejar residuos. Ideal para looks modernos y clásicos.', 'Cera para fijación fuerte y duradera', 29.99, NULL, 'assets/img/products/products-7.jpg', '["assets/img/products/products-7.jpg"]', 'Hair Styling', 'cera,fijación,estilo', 'HW-007', 45, 'instock', 0.20, '6x6x8', 'BarbeX', FALSE),
+('Face Mask', 'Máscara facial purificante. Elimina impurezas y toxinas profundas. Deja la piel fresca, renovada y radiante.', 'Máscara purificante para piel renovada', 24.50, 19.99, 'assets/img/products/products-8.jpg', '["assets/img/products/products-8.jpg"]', 'Face Care', 'máscara,purificante,renovadora', 'FM-008', 60, 'instock', 0.18, '7x7x5', 'BarbeX', FALSE);
+
+-- Actualizar productos existentes para agregar las nuevas columnas
+UPDATE products SET
+    short_description = SUBSTRING(description, 1, 200),
+    stock_status = 'instock',
+    brand = 'BarbeX',
+    featured = 0
+WHERE short_description IS NULL;
 
 -- Crear usuario admin de ejemplo
 INSERT INTO users (name, email, password, role) VALUES
