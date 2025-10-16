@@ -91,18 +91,18 @@ $categories = $category_stmt->fetchAll();
 							<ul id="mobilemenu">
 								<li class="menu-item-has-children"><a href="#">Home</a>
 									<ul class="sub-menu">
-										<li><a href="index.php">Home 01</a></li>
-										<li><a href="index-2.php">Home 02</a></li>
-										<li><a href="index-3.php">Home 03</a></li>
+										<li><a href="index.html">Home 01</a></li>
+										<li><a href="index-2.html">Home 02</a></li>
+										<li><a href="index-3.html">Home 03</a></li>
 									</ul>
 								</li>
 								<li class="menu-item-has-children"><a href="#">Pages</a>
 									<ul class="sub-menu">
-										<li><a href="about.php">About</a></li>
-										<li><a href="price.php">Price</a></li>
-										<li><a href="team.php">Team</a></li>
-										<li><a href="services.php">Services</a></li>
-										<li><a href="services-details.php">Services Details</a></li>
+										<li><a href="about.html">About</a></li>
+										<li><a href="price.html">Price</a></li>
+										<li><a href="team.html">Team</a></li>
+										<li><a href="services.html">Services</a></li>
+										<li><a href="services-details.html">Services Details</a></li>
 									</ul>
 								</li>
 								<li class="menu-item-has-children"><a href="#">Shop</a>
@@ -115,12 +115,12 @@ $categories = $category_stmt->fetchAll();
 								</li>
 								<li class="menu-item-has-children"><a href="#">Blog</a>
 									<ul class="sub-menu">
-										<li><a href="blog-grid.php">Blog Grid</a></li>
-										<li><a href="blog-standard.php">Blog Standard</a></li>
-										<li><a href="blog-details.php">Blog Details</a></li>
+										<li><a href="blog-grid.html">Blog Grid</a></li>
+										<li><a href="blog-standard.html">Blog Standard</a></li>
+										<li><a href="blog-details.html">Blog Details</a></li>
 									</ul>
 								</li>
-								<li><a href="contact.php">Contact</a></li>
+								<li><a href="contact.html">Contact</a></li>
 							</ul>
 						</div>
 					</div>

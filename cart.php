@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once 'config/database.php';
 
 // Initialize database connection
@@ -127,18 +129,18 @@ $cart_count = $cart->getItemCount();
 							<ul id="mobilemenu">
 								<li class="menu-item-has-children"><a href="#">Home</a>
 									<ul class="sub-menu">
-										<li><a href="index.php">Home 01</a></li>
-										<li><a href="index-2.php">Home 02</a></li>
-										<li><a href="index-3.php">Home 03</a></li>
+										<li><a href="index.html">Home 01</a></li>
+										<li><a href="index-2.html">Home 02</a></li>
+										<li><a href="index-3.html">Home 03</a></li>
 									</ul>
 								</li>
 								<li class="menu-item-has-children"><a href="#">Pages</a>
 									<ul class="sub-menu">
-										<li><a href="about.php">About</a></li>
-										<li><a href="price.php">Price</a></li>
-										<li><a href="team.php">Team</a></li>
-										<li><a href="services.php">Services</a></li>
-										<li><a href="services-details.php">Services Details</a></li>
+										<li><a href="about.html">About</a></li>
+										<li><a href="price.html">Price</a></li>
+										<li><a href="team.html">Team</a></li>
+										<li><a href="services.html">Services</a></li>
+										<li><a href="services-details.html">Services Details</a></li>
 									</ul>
 								</li>
 								<li class="menu-item-has-children"><a href="#">Shop</a>
@@ -151,12 +153,12 @@ $cart_count = $cart->getItemCount();
 								</li>
 								<li class="menu-item-has-children"><a href="#">Blog</a>
 									<ul class="sub-menu">
-										<li><a href="blog-grid.php">Blog Grid</a></li>
-										<li><a href="blog-standard.php">Blog Standard</a></li>
-										<li><a href="blog-details.php">Blog Details</a></li>
+										<li><a href="blog-grid.html">Blog Grid</a></li>
+										<li><a href="blog-standard.html">Blog Standard</a></li>
+										<li><a href="blog-details.html">Blog Details</a></li>
 									</ul>
 								</li>
-								<li><a href="contact.php">Contact</a></li>
+								<li><a href="contact.html">Contact</a></li>
 							</ul>
 						</div>
 					</div>
@@ -284,7 +286,7 @@ $cart_count = $cart->getItemCount();
 			       <li>Total<span class="cart-total">$78</span></li>
 			                             </ul>
 			                         </div>
-							<a class="theme-btn" href="checkout.html">CheckOut</a>
+							<a href="checkout.php" class="theme-btn" id="checkout-btn">CheckOut</a>
 			                     </div>
 			                 </div>
 				</div>
@@ -425,6 +427,39 @@ $cart_count = $cart->getItemCount();
 	<script src="assets/js/custom.js"></script>
 	<!-- Cart JS -->
 	<script src="assets/js/cart.js"></script>
+	<script>
+		function redirectToCheckout() {
+			console.log('redirectToCheckout() function called - redirecting now');
+			alert('Redirecting to checkout.php');
+
+			// Force redirect with multiple methods
+			console.log('Setting location.href to checkout.php');
+			window.location.href = 'checkout.php';
+
+			// Backup redirect after a short delay
+			setTimeout(function() {
+				console.log('Backup redirect triggered');
+				window.location.replace('checkout.php');
+			}, 100);
+
+			console.log('Location set, should redirect now');
+			return false;
+		}
+
+		// Override any other click handlers that might interfere
+		document.addEventListener('click', function(e) {
+			if (e.target.id === 'checkout-btn' || e.target.closest('#checkout-btn')) {
+				console.log('Checkout button clicked via global listener');
+				e.preventDefault();
+				e.stopImmediatePropagation();
+
+				// Force redirect immediately
+				console.log('Forcing redirect to checkout.php');
+				window.location.href = 'http://localhost/barbex/checkout.php';
+				return false;
+			}
+		}, true); // Use capture phase
+	</script>
 
 </body>
 

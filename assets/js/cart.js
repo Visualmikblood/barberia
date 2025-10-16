@@ -286,7 +286,7 @@ class ShoppingCart {
                 <tr>
                     <td colspan="6" style="text-align: center; padding: 50px;">
                         <h4>Tu carrito está vacío</h4>
-                        <a href="product-page.html" class="theme-btn" style="margin-top: 20px;">Ir a la tienda</a>
+                        <a href="product-page.php" class="theme-btn" style="margin-top: 20px;">Ir a la tienda</a>
                     </td>
                 </tr>
             `;

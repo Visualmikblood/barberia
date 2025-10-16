@@ -1,5 +1,5 @@
 <?php
-session_start();
+// No iniciar sesión aquí, se maneja en los archivos que usan esta clase
 
 class Cart {
     private $db;
