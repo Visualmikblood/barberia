@@ -1,77 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-require_once 'config/database.php';
-
-// Initialize database connection
-$database = new Database();
-$db = $database->getConnection();
-
-// Check if database connection is available
-if (!$db) {
-    die("Error: Database connection not available. Please check your database configuration.");
-}
-
-// Include cart class
-require_once 'classes/Cart.php';
-
-// Initialize cart
-$cart = new Cart($db);
-
-// Handle POST requests for cart operations
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    header('Content-Type: application/json');
-
-    $action = $_POST['action'] ?? '';
-
-    switch ($action) {
-        case 'add':
-            $product_id = (int)($_POST['product_id'] ?? 0);
-            $quantity = (int)($_POST['quantity'] ?? 1);
-
-            if ($product_id > 0) {
-                $result = $cart->addToCart($product_id, $quantity);
-                echo json_encode($result);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Invalid product ID']);
-            }
-            exit;
-
-        case 'update':
-            $product_id = (int)($_POST['product_id'] ?? 0);
-            $quantity = (int)($_POST['quantity'] ?? 0);
-
-            if ($product_id > 0 && $quantity >= 0) {
-                $result = $cart->updateQuantity($product_id, $quantity);
-                echo json_encode($result);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
-            }
-            exit;
-
-        case 'remove':
-            $product_id = (int)($_POST['product_id'] ?? 0);
-
-            if ($product_id > 0) {
-                $result = $cart->removeFromCart($product_id);
-                echo json_encode($result);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Invalid product ID']);
-            }
-            exit;
-
-        case 'clear':
-            $result = $cart->clearCart();
-            echo json_encode($result);
-            exit;
-    }
-}
-
-// Get cart items for display
-$cart_items = $cart->getCartItems();
-$cart_total = $cart->getTotal();
-$cart_count = $cart->getItemCount();
+// No necesitamos PHP para el carrito, usaremos JavaScript con localStorage
+// como en product-page.php para mantener consistencia
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -176,11 +105,11 @@ $cart_count = $cart->getItemCount();
 							</div>
 						</div>
 						<div class="header__area-menubar-right-box-cart">
-							<a href="cart.php" class="header__area-menubar-right-box-cart-link">
-								<i class="fal fa-shopping-cart"></i>
-								<span class="cart-count"><?php echo $cart_count; ?></span>
-							</a>
-						</div>
+<a href="cart.php" class="header__area-menubar-right-box-cart-link">
+<i class="fal fa-shopping-cart"></i>
+<span class="cart-count">0</span>
+</a>
+</div>
 						<div class="header__area-menubar-right-box-btn">
 							<a href="login.php" class="theme-border-btn">Login<i class="far fa-angle-double-right"></i></a>
 						</div>
@@ -226,41 +155,8 @@ $cart_count = $cart->getItemCount();
                                     <th class="cart-col-remove">Remove</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr class="cart__area-table-item">
-                                    <td><span class="title">Image</span>
-                                        <a class="cart__area-table-item-product" href="product-details.html"><img src="assets/img/products/products-11.jpg" alt=""></a>
-                                    </td>
-                                    <td class="cart__area-table-item-name"><span class="title">Product Name</span><a href="product-details.html">Face cream</a></td>
-                                    <td class="cart__area-table-item-price"><span class="title">Price</span><span>$18.08</span></td>
-                                    <td><span class="title">Quantity</span>
-                                        <div class="cart__area-table-item-product-qty-select">
-                                            <div class="cart__area-table-item-product-qty-select-cart-plus-minus"><input type="text" value="1">
-                                                <div class="dec qtybutton">-</div>
-                                                <div class="inc qtybutton">+</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="cart__area-table-item-total"><span class="title">Total</span><span>$18.08</span></td>
-                                    <td class="cart__area-table-item-remove"><span class="title">Remove</span><a href="#"><i class="fal fa-trash-alt"></i></a></td>
-                                </tr>
-                                <tr class="cart__area-table-item">
-                                    <td><span class="title">Image</span>
-                                        <a class="cart__area-table-item-product" href="product-details.html"><img src="assets/img/products/products-7.jpg" alt=""></a>
-                                    </td>
-                                    <td class="cart__area-table-item-name"><span class="title">Product Name</span><a href="product-details.html">Face cream</a></td>
-                                    <td class="cart__area-table-item-price"><span class="title">Price</span><span>$37.08</span></td>
-                                    <td><span class="title">Quantity</span>
-                                        <div class="cart__area-table-item-product-qty-select">
-                                            <div class="cart__area-table-item-product-qty-select-cart-plus-minus"><input type="text" value="1">
-                                                <div class="dec qtybutton">-</div>
-                                                <div class="inc qtybutton">+</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="cart__area-table-item-total"><span class="title">Total</span><span>$37.08</span></td>
-                                    <td class="cart__area-table-item-remove"><span class="title">Remove</span><a href="#"><i class="fal fa-trash-alt"></i></a></td>
-                                </tr>
+                            <tbody id="cart-items">
+                                <!-- Cart items will be populated by JavaScript -->
                             </tbody>
                         </table>
                     </form>
@@ -282,11 +178,11 @@ $cart_count = $cart->getItemCount();
 			                         <h5>Cart Total</h5>
 			                         <div class="all__sidebar-item-cart">
 			                             <ul>
-			       <li>Subtotal<span class="cart-subtotal">$78</span></li>
-			       <li>Total<span class="cart-total">$78</span></li>
+			                               <li>Subtotal<span class="cart-subtotal">$0.00</span></li>
+			                               <li>Total<span class="cart-total">$0.00</span></li>
 			                             </ul>
 			                         </div>
-							<a href="checkout.php" class="theme-btn" id="checkout-btn">CheckOut</a>
+			    <a href="checkout.php" class="theme-btn" id="checkout-btn">CheckOut</a>
 			                     </div>
 			                 </div>
 				</div>
@@ -425,40 +321,276 @@ $cart_count = $cart->getItemCount();
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
-	<!-- Cart JS -->
-	<script src="assets/js/cart.js"></script>
+	<!-- Cart JavaScript - Consistent with product-page.php -->
 	<script>
-		function redirectToCheckout() {
-			console.log('redirectToCheckout() function called - redirecting now');
-			alert('Redirecting to checkout.php');
+		console.log('=== CART PAGE LOADED ===');
 
-			// Force redirect with multiple methods
-			console.log('Setting location.href to checkout.php');
-			window.location.href = 'checkout.php';
+		class CartPage {
+			constructor() {
+				this.cart = [];
+				this.storageKey = 'barbex_final_cart';
+				console.log('=== CART PAGE INITIALIZED ===');
+				this.init();
+			}
 
-			// Backup redirect after a short delay
-			setTimeout(function() {
-				console.log('Backup redirect triggered');
-				window.location.replace('checkout.php');
-			}, 100);
+			init() {
+				console.log('Loading cart page...');
+				this.loadCart();
+				console.log('Cart loaded:', this.cart);
 
-			console.log('Location set, should redirect now');
-			return false;
+				// Clear any old cart data that might be conflicting
+				const oldKeys = ['cart', 'barbex_cart', 'shopping_cart'];
+				oldKeys.forEach(key => {
+					if (localStorage.getItem(key)) {
+						console.log('Removing old cart data from key:', key);
+						localStorage.removeItem(key);
+					}
+				});
+
+				this.renderCart();
+				this.updateCartCount();
+				this.bindEvents();
+				console.log('Cart page ready');
+			}
+
+			loadCart() {
+				try {
+					const saved = localStorage.getItem(this.storageKey);
+					this.cart = saved ? JSON.parse(saved) : [];
+					console.log('Loaded', this.cart.length, 'items from cart');
+				} catch (error) {
+					this.cart = [];
+					console.error('Error loading cart:', error);
+				}
+			}
+
+			saveCart() {
+				try {
+					localStorage.setItem(this.storageKey, JSON.stringify(this.cart));
+					console.log('Saved cart with', this.cart.length, 'items');
+				} catch (error) {
+					console.error('Error saving cart:', error);
+				}
+			}
+
+			renderCart() {
+				const tbody = document.getElementById('cart-items');
+				if (!tbody) {
+					console.log('Cart items tbody not found');
+					return;
+				}
+
+				console.log('Rendering cart with', this.cart.length, 'items');
+
+				if (this.cart.length === 0) {
+					tbody.innerHTML = `
+						<tr>
+							<td colspan="6" style="text-align: center; padding: 50px;">
+								<h4>Your cart is empty</h4>
+								<p>Add some products to get started!</p>
+								<a href="product-page.php" class="theme-btn">Continue Shopping</a>
+							</td>
+						</tr>
+					`;
+					this.updateTotals(0, 0);
+					return;
+				}
+
+				let html = '';
+				let subtotal = 0;
+
+				this.cart.forEach((item, index) => {
+					const total = item.price * item.quantity;
+					subtotal += total;
+
+					console.log('Rendering item:', item.name, 'qty:', item.quantity);
+
+					html += `
+						<tr class="cart__area-table-item">
+							<td><span class="title">Image</span>
+								<a class="cart__area-table-item-product" href="product-details.php?id=${item.id}">
+									<img src="${item.image}" alt="${item.name}">
+								</a>
+							</td>
+							<td class="cart__area-table-item-name">
+								<span class="title">Product Name</span>
+								<a href="product-details.php?id=${item.id}">${item.name}</a>
+							</td>
+							<td class="cart__area-table-item-price">
+								<span class="title">Price</span>
+								<span>$${item.price.toFixed(2)}</span>
+							</td>
+							<td><span class="title">Quantity</span>
+								<div class="cart__area-table-item-product-qty-select">
+									<div class="cart__area-table-item-product-qty-select-cart-plus-minus">
+										<input type="text" value="${item.quantity}" data-index="${index}" class="qty-input">
+										<div class="dec qtybutton" data-index="${index}">-</div>
+										<div class="inc qtybutton" data-index="${index}">+</div>
+									</div>
+								</div>
+							</td>
+							<td class="cart__area-table-item-total">
+								<span class="title">Total</span>
+								<span>$${total.toFixed(2)}</span>
+							</td>
+							<td class="cart__area-table-item-remove">
+								<span class="title">Remove</span>
+								<a href="#" class="remove-item" data-index="${index}">
+									<i class="fal fa-trash-alt"></i>
+								</a>
+							</td>
+						</tr>
+					`;
+				});
+
+				console.log('Generated HTML for', this.cart.length, 'items');
+
+				tbody.innerHTML = html;
+				console.log('Set tbody innerHTML');
+
+				// Verify the HTML was applied
+				const rows = tbody.querySelectorAll('tr');
+				console.log('Number of table rows after render:', rows.length);
+
+				// Check if cart items are visible
+				const cartItems = tbody.querySelectorAll('.cart__area-table-item');
+				console.log('Number of cart item rows:', cartItems.length);
+
+				// Check computed styles
+				if (cartItems.length > 0) {
+					const firstItem = cartItems[0];
+					const computedStyle = window.getComputedStyle(firstItem);
+					console.log('First cart item display:', computedStyle.display);
+					console.log('First cart item visibility:', computedStyle.visibility);
+					console.log('First cart item opacity:', computedStyle.opacity);
+
+					// Check if the table itself is visible
+					const table = document.querySelector('.cart__area-table');
+					if (table) {
+						const tableStyle = window.getComputedStyle(table);
+						console.log('Table display:', tableStyle.display);
+						console.log('Table visibility:', tableStyle.visibility);
+					}
+
+					// Check parent containers
+					let parent = firstItem.parentElement;
+					let count = 0;
+					while (parent && parent !== document.body && count < 5) {
+						const parentStyle = window.getComputedStyle(parent);
+						console.log(`Parent ${parent.tagName}.${parent.className || ''} display:`, parentStyle.display);
+						console.log(`Parent ${parent.tagName}.${parent.className || ''} visibility:`, parentStyle.visibility);
+						parent = parent.parentElement;
+						count++;
+					}
+				}
+
+				this.updateTotals(subtotal, subtotal); // No taxes/shipping for now
+			}
+
+			updateTotals(subtotal, total) {
+				const subtotalEl = document.querySelector('.cart-subtotal');
+				const totalEl = document.querySelector('.cart-total');
+
+				if (subtotalEl) subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+				if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+			}
+
+			updateCartCount() {
+				const count = this.cart.reduce((total, item) => total + item.quantity, 0);
+				const elements = document.querySelectorAll('.cart-count');
+
+				elements.forEach((el) => {
+					el.textContent = count;
+					if (count > 0) {
+						el.classList.add('cart-count-visible');
+					} else {
+						el.classList.remove('cart-count-visible');
+					}
+				});
+			}
+
+			bindEvents() {
+				// Quantity buttons
+				document.addEventListener('click', (e) => {
+					const target = e.target;
+
+					if (target.classList.contains('inc')) {
+						e.preventDefault();
+						const index = parseInt(target.getAttribute('data-index'));
+						console.log('Incrementing quantity for item', index);
+						this.updateQuantity(index, this.cart[index].quantity + 1);
+					} else if (target.classList.contains('dec')) {
+						e.preventDefault();
+						const index = parseInt(target.getAttribute('data-index'));
+						console.log('Decrementing quantity for item', index);
+						if (this.cart[index].quantity > 1) {
+							this.updateQuantity(index, this.cart[index].quantity - 1);
+						}
+					} else if (target.classList.contains('remove-item') || target.closest('.remove-item')) {
+						e.preventDefault();
+						const removeBtn = target.closest('.remove-item');
+						const index = parseInt(removeBtn.getAttribute('data-index'));
+						console.log('Removing item', index);
+						this.removeItem(index);
+					}
+				});
+
+				// Quantity input changes
+				document.addEventListener('change', (e) => {
+					if (e.target.classList.contains('qty-input')) {
+						const index = parseInt(e.target.getAttribute('data-index'));
+						const newQty = parseInt(e.target.value) || 1;
+						this.updateQuantity(index, Math.max(1, newQty));
+					}
+				});
+
+				// Checkout button
+				const checkoutBtn = document.getElementById('checkout-btn');
+				if (checkoutBtn) {
+					checkoutBtn.addEventListener('click', (e) => {
+						e.preventDefault();
+						if (this.cart.length === 0) {
+							alert('Your cart is empty. Add some products first!');
+							return;
+						}
+						window.location.href = 'checkout.php';
+					});
+				}
+			}
+
+			updateQuantity(index, newQuantity) {
+				if (index >= 0 && index < this.cart.length) {
+					console.log('Updating quantity for item', index, 'from', this.cart[index].quantity, 'to', newQuantity);
+					this.cart[index].quantity = Math.max(1, newQuantity);
+					this.saveCart();
+					this.renderCart();
+					this.updateCartCount();
+					console.log('Quantity updated successfully');
+				} else {
+					console.log('Invalid index for quantity update:', index);
+				}
+			}
+
+			removeItem(index) {
+				if (index >= 0 && index < this.cart.length) {
+					console.log('Removing item at index', index, ':', this.cart[index].name);
+					this.cart.splice(index, 1);
+					this.saveCart();
+					this.renderCart();
+					this.updateCartCount();
+					console.log('Item removed successfully');
+				} else {
+					console.log('Invalid index for item removal:', index);
+				}
+			}
 		}
 
-		// Override any other click handlers that might interfere
-		document.addEventListener('click', function(e) {
-			if (e.target.id === 'checkout-btn' || e.target.closest('#checkout-btn')) {
-				console.log('Checkout button clicked via global listener');
-				e.preventDefault();
-				e.stopImmediatePropagation();
-
-				// Force redirect immediately
-				console.log('Forcing redirect to checkout.php');
-				window.location.href = 'http://localhost/barbex/checkout.php';
-				return false;
-			}
-		}, true); // Use capture phase
+		// Initialize when DOM loads
+		document.addEventListener('DOMContentLoaded', function() {
+			console.log('DOM loaded, creating cart page...');
+			window.cartPage = new CartPage();
+			console.log('Cart page created successfully!');
+		});
 	</script>
 
 </body>
