@@ -11,10 +11,8 @@ class Cart {
     }
 
     private function initSession() {
-        if (!isset($_SESSION['cart_session_id'])) {
-            $_SESSION['cart_session_id'] = session_id() . '_' . time();
-        }
-        $this->sessionId = $_SESSION['cart_session_id'];
+        // Use PHP session ID directly for better persistence
+        $this->sessionId = session_id();
 
         // Crear sesión en la base de datos si no existe
         $this->createSessionIfNotExists();
@@ -27,6 +25,9 @@ class Cart {
         $stmt->bindParam(":session_id", $this->sessionId);
         $stmt->bindParam(":user_id", $userId);
         $stmt->execute();
+
+        // Also update the session timestamp to keep it alive
+        $this->updateSessionTimestamp();
     }
 
     public function addToCart($productId, $quantity = 1) {
@@ -50,7 +51,7 @@ class Cart {
         // Insertar o actualizar item en el carrito
         $query = "INSERT INTO cart_items (session_id, product_id, quantity)
                   VALUES (:session_id, :product_id, :quantity)
-                  ON DUPLICATE KEY UPDATE quantity = quantity + :quantity";
+                  ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
 
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(":session_id", $this->sessionId);
@@ -184,6 +185,9 @@ class Cart {
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(":session_id", $this->sessionId);
         $stmt->execute();
+
+        // Also update PHP session to keep it alive
+        $_SESSION['last_activity'] = time();
     }
 
     public function getCartData() {

@@ -2,6 +2,11 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
+// Set session lifetime to 24 hours
+ini_set('session.gc_maxlifetime', 86400);
+ini_set('session.cookie_lifetime', 86400);
+
 require_once 'config/database.php';
 
 // Initialize database connection
@@ -101,7 +106,7 @@ $cart_count = $cart->getItemCount();
 	<!-- Mean menu -->
 	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="assets/sass/style.css">
+	<link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body>
@@ -227,40 +232,41 @@ $cart_count = $cart->getItemCount();
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="cart__area-table-item">
-                                    <td><span class="title">Image</span>
-                                        <a class="cart__area-table-item-product" href="product-details.html"><img src="assets/img/products/products-11.jpg" alt=""></a>
+                                <?php if (empty($cart_items)): ?>
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 50px;">
+                                        <h4>Tu carrito está vacío</h4>
+                                        <a href="product-page.php" class="theme-btn" style="margin-top: 20px;">Ir a la tienda</a>
                                     </td>
-                                    <td class="cart__area-table-item-name"><span class="title">Product Name</span><a href="product-details.html">Face cream</a></td>
-                                    <td class="cart__area-table-item-price"><span class="title">Price</span><span>$18.08</span></td>
-                                    <td><span class="title">Quantity</span>
-                                        <div class="cart__area-table-item-product-qty-select">
-                                            <div class="cart__area-table-item-product-qty-select-cart-plus-minus"><input type="text" value="1">
-                                                <div class="dec qtybutton">-</div>
-                                                <div class="inc qtybutton">+</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="cart__area-table-item-total"><span class="title">Total</span><span>$18.08</span></td>
-                                    <td class="cart__area-table-item-remove"><span class="title">Remove</span><a href="#"><i class="fal fa-trash-alt"></i></a></td>
                                 </tr>
-                                <tr class="cart__area-table-item">
-                                    <td><span class="title">Image</span>
-                                        <a class="cart__area-table-item-product" href="product-details.html"><img src="assets/img/products/products-7.jpg" alt=""></a>
-                                    </td>
-                                    <td class="cart__area-table-item-name"><span class="title">Product Name</span><a href="product-details.html">Face cream</a></td>
-                                    <td class="cart__area-table-item-price"><span class="title">Price</span><span>$37.08</span></td>
-                                    <td><span class="title">Quantity</span>
-                                        <div class="cart__area-table-item-product-qty-select">
-                                            <div class="cart__area-table-item-product-qty-select-cart-plus-minus"><input type="text" value="1">
-                                                <div class="dec qtybutton">-</div>
-                                                <div class="inc qtybutton">+</div>
+                                <?php else: ?>
+                                    <?php foreach ($cart_items as $item): ?>
+                                    <tr class="cart__area-table-item">
+                                        <td><span class="title">Image</span>
+                                            <a class="cart__area-table-item-product" href="product-details.php?id=<?php echo $item['id']; ?>">
+                                                <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" onerror="this.src='assets/img/products/products-1.jpg'">
+                                            </a>
+                                        </td>
+                                        <td class="cart__area-table-item-name"><span class="title">Product Name</span>
+                                            <a href="product-details.php?id=<?php echo $item['id']; ?>"><?php echo htmlspecialchars($item['name']); ?></a>
+                                        </td>
+                                        <td class="cart__area-table-item-price"><span class="title">Price</span><span>$<?php echo number_format($item['price'], 2); ?></span></td>
+                                        <td><span class="title">Quantity</span>
+                                            <div class="cart__area-table-item-product-qty-select">
+                                                <div class="cart__area-table-item-product-qty-select-cart-plus-minus">
+                                                    <input type="text" value="<?php echo $item['quantity']; ?>" class="quantity-input" data-product-id="<?php echo $item['id']; ?>">
+                                                    <div class="dec qtybutton" data-product-id="<?php echo $item['id']; ?>">-</div>
+                                                    <div class="inc qtybutton" data-product-id="<?php echo $item['id']; ?>">+</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="cart__area-table-item-total"><span class="title">Total</span><span>$37.08</span></td>
-                                    <td class="cart__area-table-item-remove"><span class="title">Remove</span><a href="#"><i class="fal fa-trash-alt"></i></a></td>
-                                </tr>
+                                        </td>
+                                        <td class="cart__area-table-item-total"><span class="title">Total</span><span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span></td>
+                                        <td class="cart__area-table-item-remove"><span class="title">Remove</span>
+                                            <a href="#" class="remove-item" data-product-id="<?php echo $item['id']; ?>"><i class="fal fa-trash-alt"></i></a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </form>
@@ -282,11 +288,13 @@ $cart_count = $cart->getItemCount();
 			                         <h5>Cart Total</h5>
 			                         <div class="all__sidebar-item-cart">
 			                             <ul>
-			       <li>Subtotal<span class="cart-subtotal">$78</span></li>
-			       <li>Total<span class="cart-total">$78</span></li>
+			       <li>Subtotal<span class="cart-subtotal">$<?php echo number_format($cart_total, 2); ?></span></li>
+			       <li>Total<span class="cart-total">$<?php echo number_format($cart_total, 2); ?></span></li>
 			                             </ul>
 			                         </div>
+							<?php if (!empty($cart_items)): ?>
 							<a href="checkout.php" class="theme-btn" id="checkout-btn">CheckOut</a>
+							<?php endif; ?>
 			                     </div>
 			                 </div>
 				</div>
@@ -426,6 +434,10 @@ $cart_count = $cart->getItemCount();
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
 	<!-- Cart JS -->
+	<script>
+		// Set PHP enabled flag for cart.js
+		window.phpEnabled = true;
+	</script>
 	<script src="assets/js/cart.js"></script>
 	<script>
 		function redirectToCheckout() {

@@ -219,15 +219,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Checkout Area Start -->
     <div class="checkout__area section-padding">
         <div class="container">
-			<form action="checkout.php" method="POST">
+   <form action="checkout.php" method="POST">
             <div class="row">
-				<div class="col-xl-8 col-lg-8 lg-mb-30">
-					<div class="checkout__area-left">
-						<div class="checkout__area-left-top">
-							<span>Have a Coupon<a href="#">Check here to enter your code</a></span>
-						</div>
-					</div>
-					<h4 class="pt-60 pb-60">Billing Details</h4>
+    <div class="col-xl-8 col-lg-8 lg-mb-30">
+    	<div class="checkout__area-left">
+    		<div class="checkout__area-left-top">
+    			<span>Have a Coupon<a href="#">Check here to enter your code</a></span>
+    		</div>
+    	</div>
+    	<h4 class="checkout__billing-title">Billing Details</h4>
 					<?php echo $message; ?>
 					<div class="checkout__area-left-form">
 						<div class="row">
@@ -273,32 +273,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 									<input type="text" name="postcode" placeholder="Postcode / Zip" required>
 								</div>
 							</div>
-							<div class="col-md-12 pt-60 pb-60">
+							<div class="col-md-12 checkout__additional-info">
 								<h3>Additional Information</h3>
 							</div>
 							<div class="col-md-12">
 								<div class="checkout__area-left-form-list">
-									<textarea name="notes" placeholder="Notes about Your Order"></textarea>
+									<label>Order Notes (optional)</label>
+									<textarea name="notes" placeholder="Notes about Your Order, e.g. special notes for delivery"></textarea>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 				<div class="col-xl-4 col-lg-4">
-                    <div class="all__sidebar">
-                        <div class="all__sidebar-item">
-                            <h5>Your Order</h5>
-                            <div class="all__sidebar-item-cart">
-                                <ul>
+				                <div class="all__sidebar">
+				                    <div class="all__sidebar-item">
+				                        <h5>Your Order</h5>
+				                        <div class="all__sidebar-item-cart">
+				                            <ul>
+									<?php if (empty($cart_items)): ?>
+									<li>No items in cart</li>
+									<?php else: ?>
 									<?php foreach ($cart_items as $item): ?>
 									<li><?php echo htmlspecialchars($item['name']); ?> X <?php echo $item['quantity']; ?><span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span></li>
 									<?php endforeach; ?>
+									<?php endif; ?>
 									<li>Total<span>$<?php echo number_format($cart_total, 2); ?></span></li>
-                                </ul>
-                            </div>
-							<button class="theme-btn" type="submit">Place Order<i class="far fa-angle-double-right"></i></button>
-                        </div>
-                    </div>
+				                            </ul>
+				                        </div>
+							<button class="theme-btn" type="submit" <?php echo empty($cart_items) ? 'disabled' : ''; ?>>Place Order<i class="far fa-angle-double-right"></i></button>
+				                    </div>
+				                </div>
 				</div>
             </div>
 			</form>
@@ -436,6 +441,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
+	<script>
+		// Set PHP enabled flag for cart.js
+		window.phpEnabled = true;
+	</script>
+	<script src="assets/js/cart.js"></script>
 </body>
 
 </html>

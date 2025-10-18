@@ -443,6 +443,9 @@ Menu Bar
                             min-width: 22px;
                             border: 2px solid #fff;
                             transition: all 0.3s ease;
+                            opacity: 0;
+                            visibility: hidden;
+                            z-index: 10;
                         }
                     }
                 }

@@ -1,0 +1,142 @@
+/*==========================================================================
+Features
+==========================================================================*/
+.band__area {
+    background: var(--heading-color);
+    padding: 80px 0;
+    border-bottom: 1px solid var(--body-color);
+    &-item {
+        text-align: center;
+    }
+}
+/*==========================================================================
+Newsletter
+==========================================================================*/
+.newsletter__area {
+    background: var(--heading-color);
+    padding: 80px 0;
+    border-bottom: 1px solid var(--body-color);
+    &-left {
+        h2 {
+            color: var(--white);
+        }
+    }
+    &-right {
+        form {
+            position: relative;
+            input {
+                background: transparent;
+                border-color: var(--border-color-3);
+                height: 70px;
+                color: var(--color-2);
+                &:focus {
+                    color: var(--white);
+                }
+            }
+            button {
+                position: absolute;
+                top: 0;
+                right: 0;
+                height: 70px;
+                width: 70px;    
+                padding: 0;
+                &:focus {
+                    color: var(--white);
+                }            
+            }
+        }
+    }
+}
+/*==========================================================================
+Pagination
+========================================================================== */
+.theme__pagination {
+    ul {
+        margin: 0;
+        padding: 0;
+        li {
+            list-style: none;
+            display: inline-block;
+            margin-right: 15px;
+            &:last-child {
+                margin: 0;
+            }
+            .active {                    
+                background: var(--primary-color);
+                color: var(--white);
+                border-color: var(--primary-color);
+            }
+            a {
+                color: var(--heading-color);
+                border: 1px solid var(--border-color-2);
+                display: block;
+                height: 50px;
+                width: 50px;
+                line-height: 50px;
+                border-radius: 50%;
+                text-align: center;
+                font-weight: 500;
+                transition: all 0.4s ease-in-out; 
+                &:hover {
+                    background: var(--primary-color);
+                    color: var(--white);
+                    border-color: var(--primary-color);
+                }
+            }
+        }
+    } 
+}
+/*==========================================================================
+Gallery
+========================================================================== */
+.gallery__area {
+    background: var(--color-10);
+    position: relative;
+    z-index: 1;
+    &-title {
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto;
+        h2 {
+            color: var(--white);
+        }
+        .subtitle__two {
+            color: var(--white);
+        }
+    }
+    &-item {
+        &-image {
+            position: relative;
+            img {
+                min-height: 450px;
+                object-fit: cover;
+            }
+            &-content {
+                position: absolute;
+                bottom: 30px;
+                transition: all .4s ease-out 0s;
+                background: var(--color-10);
+                padding: 30px 25px;
+                display: inline-block;
+                left: 10px;
+                opacity: 0;
+                h4 {
+                    color: var(--white);
+                }
+                span {
+                    color: var(--primary-color);
+                    font-family: var(--heading-font);
+                    font-weight: 600;
+                }
+            }
+            &:hover {
+                .gallery__area-item-image {
+                    &-content {
+                        opacity: 1;
+                        left: 30px;
+                    }
+                }            
+            }
+        }
+    }
+}

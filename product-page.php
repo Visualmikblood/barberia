@@ -1,5 +1,10 @@
 <?php
 session_start();
+
+// Set session lifetime to 24 hours
+ini_set('session.gc_maxlifetime', 86400);
+ini_set('session.cookie_lifetime', 86400);
+
 require_once 'config/database.php';
 
 // Initialize database connection
@@ -63,7 +68,7 @@ $categories = $category_stmt->fetchAll();
 	<!-- Mean menu -->
 	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="assets/sass/style.css">
+	<link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body>
@@ -206,7 +211,16 @@ $categories = $category_stmt->fetchAll();
                                 ?>
                                 <div class="all__sidebar-item-product-item">
                                     <div class="all__sidebar-item-product-item-image">
-                                        <a href="product-details.php?id=<?php echo $product['id']; ?>"><img src="<?php echo htmlspecialchars($product['image']); ?>" alt=""></a>
+                                        <?php
+                                        $sidebar_image_path = htmlspecialchars($product['image']);
+                                        $sidebar_full_image_path = __DIR__ . '/' . $product['image'];
+                                        if (!empty($product['image']) && file_exists($sidebar_full_image_path)) {
+                                            $sidebar_image_src = $sidebar_image_path;
+                                        } else {
+                                            $sidebar_image_src = 'assets/img/products/products-1.jpg'; // Default image
+                                        }
+                                        ?>
+                                        <a href="product-details.php?id=<?php echo $product['id']; ?>"><img src="<?php echo $sidebar_image_src; ?>" alt="" onerror="this.src='assets/img/products/products-1.jpg'"></a>
                                     </div>
                                     <div class="all__sidebar-item-product-item-content">
                                         <div class="all__sidebar-item-product-item-content-review">
@@ -262,12 +276,21 @@ $categories = $category_stmt->fetchAll();
                         <div class="col-xl-4 col-lg-4 col-md-6 mb-30">
                             <div class="products__area-item">
                                 <div class="products__area-item-image">
-                                    <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="">
+                                    <?php
+                                    $image_path = htmlspecialchars($product['image']);
+                                    $full_image_path = __DIR__ . '/' . $product['image'];
+                                    if (!empty($product['image']) && file_exists($full_image_path)) {
+                                        $image_src = $image_path;
+                                    } else {
+                                        $image_src = 'assets/img/products/products-1.jpg'; // Default image
+                                    }
+                                    ?>
+                                    <img src="<?php echo $image_src; ?>" alt="" onerror="this.src='assets/img/products/products-1.jpg'">
                                     <div class="products__area-item-image-social">
                                         <ul>
-                                            <li><a href="#" class="add-to-cart-btn" data-product-id="<?php echo $product['id']; ?>" data-product-name="<?php echo htmlspecialchars($product['name']); ?>" data-product-price="<?php echo $product['price']; ?>" data-product-image="<?php echo htmlspecialchars($product['image']); ?>"><i class="far fa-shopping-basket"></i></a></li>
+                                            <li><a href="#" class="add-to-cart-btn" data-product-id="<?php echo $product['id']; ?>" data-product-name="<?php echo htmlspecialchars($product['name']); ?>" data-product-price="<?php echo $product['price']; ?>" data-product-image="<?php echo $image_src; ?>"><i class="far fa-shopping-basket"></i></a></li>
                                             <li><a href="#"><i class="far fa-heart"></i></a></li>
-                                            <li><a class="img-popup" href="<?php echo htmlspecialchars($product['image']); ?>"><i class="far fa-compress"></i></a></li>
+                                            <li><a class="img-popup" href="<?php echo $image_src; ?>"><i class="far fa-compress"></i></a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -446,6 +469,10 @@ $categories = $category_stmt->fetchAll();
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
 	<!-- Cart JS -->
+	<script>
+		// Set PHP enabled flag for cart.js
+		window.phpEnabled = true;
+	</script>
 	<script src="assets/js/cart.js"></script>
 </body>
 

@@ -8,6 +8,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Start session with proper configuration
+if (session_status() === PHP_SESSION_NONE) {
+    // Set session lifetime to 24 hours before starting session
+    ini_set('session.gc_maxlifetime', 86400);
+    ini_set('session.cookie_lifetime', 86400);
+    session_start();
+}
+
 require_once '../config/database.php';
 require_once '../classes/Cart.php';
 
@@ -59,11 +67,18 @@ function handleGet($cart, $action) {
 }
 
 function handlePost($cart, $action) {
-    $data = json_decode(file_get_contents('php://input'), true);
+    // Try to get data from POST first (form data), then from JSON
+    $data = $_POST;
+
+    if (empty($data)) {
+        // Fallback to JSON
+        $raw_input = file_get_contents('php://input');
+        $data = json_decode($raw_input, true);
+    }
 
     switch ($action) {
         case 'add':
-            if (!isset($data['product_id'])) {
+            if (!$data || !isset($data['product_id'])) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'ID de producto requerido']);
                 return;

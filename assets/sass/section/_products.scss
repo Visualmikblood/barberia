@@ -514,9 +514,12 @@ Cart Area
     }  
 }
 /*==========================================================================
-Checkout Area
-==========================================================================*/
+ Checkout Area
+ ==========================================================================*/
 .checkout__area {
+    section-padding {
+        padding: 150px 0px;
+    }
     &-left {
         &-top {
             background: var(--color-4);
@@ -525,15 +528,15 @@ Checkout Area
                 font-family: var(--heading-font);
                 font-weight: 700;
                 font-size: 14px;
-                line-height: 24px;   
-                a {     
+                line-height: 24px;
+                a {
                     color: var(--heading-color);
-                    float: right;               
+                    float: right;
                     transition: all 0.4s ease-out 0s;
                     &:hover {
                         color: var(--primary-color);
                     }
-                }             
+                }
             }
         }
         &-form {
@@ -549,16 +552,16 @@ Checkout Area
                     padding-left: 20px;
                     appearance: none;
                     background-repeat: no-repeat;
-                    background-size: 16px;         
-                    background-position: 98% 50%;  
-                }     
+                    background-size: 16px;
+                    background-position: 98% 50%;
+                }
                 label {
                     color: var(--heading-color);
                     margin-bottom: 5px;
                     span {
                         color: var(--primary-color);
                     }
-                }           
+                }
             }
             &-list {
                 label {
@@ -568,8 +571,32 @@ Checkout Area
                         color: var(--primary-color);
                     }
                 }
+                textarea {
+                    height: 150px;
+                    padding-top: 15px;
+                    resize: vertical;
+                }
             }
         }
+    }
+}
+
+.checkout__billing-title {
+    padding: 60px 0;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--heading-color);
+    font-family: var(--heading-font);
+}
+
+.checkout__additional-info {
+    padding: 60px 0;
+    h3 {
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--heading-color);
+        font-family: var(--heading-font);
+        margin-bottom: 30px;
     }
 }
 @media (max-width: 1399px) {

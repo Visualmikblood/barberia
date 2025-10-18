@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cart</title>
+</head>
+<body>
+    <h1>Test Cart Functionality</h1>
+    <button id="add-btn">Add Product to Cart</button>
+    <button id="check-cart-btn">Check Cart</button>
+    <div id="result"></div>
+
+    <script>
+        // Set PHP enabled flag
+        window.phpEnabled = true;
+
+        // Simple test cart class
+        class TestCart {
+            constructor() {
+                this.phpEndpoint = 'api/cart.php';
+            }
+
+            async addToCart() {
+                try {
+                    const formData = new FormData();
+                    formData.append('product_id', '12');
+                    formData.append('quantity', '1');
+
+                    const response = await fetch(this.phpEndpoint + '?action=add', {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    return result;
+                } catch (error) {
+                    document.getElementById('result').innerHTML = 'Error: ' + error.message;
+                }
+            }
+
+            async checkCart() {
+                try {
+                    const response = await fetch(this.phpEndpoint, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+                    document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                    return result;
+                } catch (error) {
+                    document.getElementById('result').innerHTML = 'Error: ' + error.message;
+                }
+            }
+        }
+
+        const cart = new TestCart();
+
+        document.getElementById('add-btn').addEventListener('click', () => cart.addToCart());
+        document.getElementById('check-cart-btn').addEventListener('click', () => cart.checkCart());
+    </script>
+</body>
+</html>
