@@ -85,7 +85,7 @@ $order_items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <td>
                             <div class="d-flex align-items-center">
                                 <?php if (!empty($item['image'])): ?>
-                                    <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="product-image me-3">
+                                    <img src="<?php echo htmlspecialchars('../' . $item['image']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="product-image me-3">
                                 <?php endif; ?>
                                 <span><?php echo htmlspecialchars($item['product_name']); ?></span>
                             </div>
