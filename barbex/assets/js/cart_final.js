@@ -13,6 +13,7 @@ class ShoppingCart {
         console.log('Loading final cart...');
         this.loadCart();
         this.updateCartCount();
+        // this.loadFromDatabase(); // Cargar datos de BD al inicializar - comentado para evitar conflictos
         console.log('Final cart ready with', this.cart.length, 'items');
     }
 
@@ -38,6 +39,10 @@ class ShoppingCart {
         this.saveCart();
         this.updateCartCount();
         this.showNotification('✅ Producto agregado!');
+
+        // Sincronizar con base de datos
+        this.syncWithDatabase(product.id, 1);
+
         console.log('=== FINAL CART NOW HAS', this.cart.length, 'ITEMS ===');
         return { success: true };
     }
@@ -82,6 +87,63 @@ class ShoppingCart {
             } else {
                 el.classList.remove('cart-count-visible');
             }
+        });
+    }
+
+    syncWithDatabase(productId, quantity) {
+        console.log('=== SYNCING WITH DATABASE ===');
+        console.log('Product ID:', productId, 'Quantity:', quantity);
+
+        fetch('/api/cart.php?action=add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // IMPORTANTE: Enviar cookies de sesión
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Database sync result:', data);
+            if (data.success) {
+                console.log('✅ Product synced with database');
+            } else {
+                console.error('❌ Database sync failed:', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('❌ Database sync error:', error);
+        });
+    }
+
+    loadFromDatabase() {
+        console.log('=== LOADING CART FROM DATABASE ===');
+
+        fetch('/api/cart.php?action=get', {
+            credentials: 'include' // IMPORTANTE: Enviar cookies de sesión
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Database cart data:', data);
+            if (data.success && data.data && data.data.items) {
+                // Sincronizar localStorage con datos de BD
+                this.cart = data.data.items.map(item => ({
+                    id: item.product_id,
+                    name: item.name,
+                    price: parseFloat(item.price),
+                    image: item.image,
+                    quantity: item.quantity
+                }));
+                this.saveCart();
+                this.updateCartCount();
+                console.log('✅ Cart loaded from database:', this.cart.length, 'items');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Error loading cart from database:', error);
         });
     }
 

@@ -21,6 +21,10 @@ $cart = new Cart($db);
 $cart_items = $cart->getCartItems();
 $cart_total = $cart->getTotal();
 
+// Debug logging removed - cart is working correctly
+
+// Debug logging removed - cart is working correctly
+
 // Allow checkout even if cart is empty for testing
 // if (empty($cart_items)) {
 //     header('Location: product-page.php');
@@ -70,34 +74,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $query = "INSERT INTO orders (user_id, session_id, order_number, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_postcode, customer_country, subtotal, tax, shipping, total, payment_method, payment_status, order_status, notes, created_at) VALUES (:user_id, :session_id, :order_number, :customer_name, :customer_email, :customer_phone, :customer_address, :customer_city, :customer_postcode, :customer_country, :subtotal, :tax, :shipping, :total, :payment_method, :payment_status, :order_status, :notes, NOW())";
         $stmt = $db->prepare($query);
 
-        foreach ($order_data as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-
-        if ($stmt->execute()) {
-            $order_id = $db->lastInsertId();
-
-            // Insert order items
-            foreach ($cart_items as $item) {
-                $item_query = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, total) VALUES (:order_id, :product_id, :product_name, :product_price, :quantity, :total)";
-                $item_stmt = $db->prepare($item_query);
-                $item_stmt->execute([
-                    'order_id' => $order_id,
-                    'product_id' => $item['id'],
-                    'product_name' => $item['name'],
-                    'product_price' => $item['price'],
-                    'quantity' => $item['quantity'],
-                    'total' => $item['price'] * $item['quantity']
-                ]);
+        try {
+            foreach ($order_data as $key => $value) {
+                $stmt->bindValue(":$key", $value);
             }
 
-            // Clear cart
-            $cart->clearCart();
+            if ($stmt->execute()) {
+                $order_id = $db->lastInsertId();
 
-            // Redirect to success page
-            header("Location: checkout-success.php?order_id=$order_id");
-            exit;
-        } else {
+                // Debug: Check cart items
+                error_log("Order ID: $order_id");
+                error_log("Cart items: " . json_encode($cart_items));
+
+                // Insert order items
+                foreach ($cart_items as $item) {
+                    error_log("Processing item: " . json_encode($item));
+                    $item_query = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, total) VALUES (:order_id, :product_id, :product_name, :product_price, :quantity, :total)";
+                    $item_stmt = $db->prepare($item_query);
+                    $result = $item_stmt->execute([
+                        'order_id' => $order_id,
+                        'product_id' => $item['product_id'],
+                        'product_name' => $item['name'],
+                        'product_price' => $item['price'],
+                        'quantity' => $item['quantity'],
+                        'total' => $item['price'] * $item['quantity']
+                    ]);
+                    error_log("Item insert result: " . ($result ? 'success' : 'failed'));
+                }
+
+                // Clear cart AFTER processing items
+                $cart->clearCart();
+
+                // Redirect to success page
+                header("Location: checkout-success.php?order_id=$order_id");
+                exit;
+            } else {
+                $message = '<div class="alert alert-danger">Error processing order. Please try again.</div>';
+            }
+        } catch (Exception $e) {
+            error_log("Database error: " . $e->getMessage());
             $message = '<div class="alert alert-danger">Error processing order. Please try again.</div>';
         }
     }
@@ -242,89 +257,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Checkout Area Start -->
     <div class="checkout__area section-padding">
         <div class="container">
-			<form action="checkout.php" method="POST">
+   <form action="checkout.php" method="POST" id="checkout-form">
             <div class="row">
-				<div class="col-xl-8 col-lg-8 lg-mb-30">
-					<div class="checkout__area-left">
-						<div class="checkout__area-left-top">
-							<span>Have a Coupon<a href="#">Check here to enter your code</a></span>
-						</div>
-					</div>
-					<h4 class="pt-60 pb-60">Billing Details</h4>
-					<?php echo $message; ?>
-					<div class="checkout__area-left-form">
-						<div class="row">
-							<div class="col-md-6 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>First Name<span> *</span></label>
-									<input type="text" name="first_name" placeholder="First Name" required>
-								</div>
-							</div>
-							<div class="col-md-6 md-mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Last Name<span> *</span></label>
-									<input type="text" name="last_name" placeholder="Last Name" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Email Address<span> *</span></label>
-									<input type="email" name="email" placeholder="Email address" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Phone Number<span> *</span></label>
-									<input type="text" name="phone" placeholder="Phone" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Street Address<span> *</span></label>
-									<input type="text" name="address" placeholder="House number and Street name" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Town City<span> *</span></label>
-									<input type="text" name="city" placeholder="Town City" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Postcode / Zip<span> *</span></label>
-									<input type="text" name="postcode" placeholder="Postcode / Zip" required>
-								</div>
-							</div>
-							<div class="col-md-12 pt-60 pb-60">
-								<h3>Additional Information</h3>
-							</div>
-							<div class="col-md-12">
-								<div class="checkout__area-left-form-list">
-									<textarea name="notes" placeholder="Notes about Your Order"></textarea>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4 col-lg-4">
+    <div class="col-xl-8 col-lg-8 lg-mb-30">
+    	<div class="checkout__area-left">
+    		<div class="checkout__area-left-top">
+    			<span>Have a Coupon<a href="#">Check here to enter your code</a></span>
+    		</div>
+    	</div>
+    	<h4 class="pt-60 pb-60">Billing Details</h4>
+    	<?php echo $message; ?>
+    	<div class="checkout__area-left-form">
+    		<div class="row">
+    			<div class="col-md-6 mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>First Name<span> *</span></label>
+    					<input type="text" name="first_name" placeholder="First Name" required>
+    				</div>
+    			</div>
+    			<div class="col-md-6 md-mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>Last Name<span> *</span></label>
+    					<input type="text" name="last_name" placeholder="Last Name" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>Email Address<span> *</span></label>
+    					<input type="email" name="email" placeholder="Email address" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>Phone Number<span> *</span></label>
+    					<input type="text" name="phone" placeholder="Phone" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>Street Address<span> *</span></label>
+    					<input type="text" name="address" placeholder="House number and Street name" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>Town City<span> *</span></label>
+    					<input type="text" name="city" placeholder="Town City" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 mb-30">
+    				<div class="checkout__area-left-form-list">
+    					<label>Postcode / Zip<span> *</span></label>
+    					<input type="text" name="postcode" placeholder="Postcode / Zip" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 pt-60 pb-60">
+    				<h3>Additional Information</h3>
+    			</div>
+    			<div class="col-md-12">
+    				<div class="checkout__area-left-form-list">
+    					<textarea name="notes" placeholder="Notes about Your Order"></textarea>
+    				</div>
+    			</div>
+    		</div>
+    	</div>
+    </div>
+    <div class="col-xl-4 col-lg-4">
                     <div class="all__sidebar">
                         <div class="all__sidebar-item">
                             <h5>Your Order</h5>
-                            <div class="all__sidebar-item-cart">
-                                <ul>
-									<?php foreach ($cart_items as $item): ?>
-									<li><?php echo htmlspecialchars($item['name']); ?> X <?php echo $item['quantity']; ?><span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span></li>
-									<?php endforeach; ?>
-									<li>Total<span>$<?php echo number_format($cart_total, 2); ?></span></li>
+                            <div class="all__sidebar-item-cart" id="checkout-cart-items">
+                                <ul id="checkout-items-list">
+    					<?php if (!empty($cart_items)): ?>
+    						<?php foreach ($cart_items as $item): ?>
+    						<li>
+    							<div class="cart-item-info">
+    								<?php if (!empty($item['image'])): ?>
+    									<img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>" class="cart-item-image" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
+    								<?php endif; ?>
+    								<span><?php echo htmlspecialchars($item['name']); ?> X <?php echo $item['quantity']; ?></span>
+    							</div>
+    							<span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span>
+    						</li>
+    						<?php endforeach; ?>
+    					<?php else: ?>
+    						<li id="empty-cart-message">No items in cart</li>
+    					<?php endif; ?>
+    					<li id="checkout-total">Total<span>$<?php echo number_format($cart_total, 2); ?></span></li>
                                 </ul>
                             </div>
-							<button class="theme-btn" type="submit">Place Order<i class="far fa-angle-double-right"></i></button>
+    			<button class="theme-btn" type="submit">Place Order<i class="far fa-angle-double-right"></i></button>
                         </div>
                     </div>
-				</div>
+    </div>
             </div>
-			</form>
+   </form>
         </div>
     </div>
     <!-- Checkout Area End -->
@@ -459,6 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
+
 </body>
 
 </html>

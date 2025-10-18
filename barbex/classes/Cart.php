@@ -11,10 +11,8 @@ class Cart {
     }
 
     private function initSession() {
-        if (!isset($_SESSION['cart_session_id'])) {
-            $_SESSION['cart_session_id'] = session_id() . '_' . time();
-        }
-        $this->sessionId = $_SESSION['cart_session_id'];
+        // Usar el session_id() normal de PHP para consistencia
+        $this->sessionId = session_id();
 
         // Crear sesión en la base de datos si no existe
         $this->createSessionIfNotExists();

@@ -231,34 +231,55 @@ if (isset($_GET['order_id'])) {
                                     <hr>
 
                                     <h5>Productos del Pedido</h5>
-                                    <div class="table-responsive">
-                                        <table class="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>Producto</th>
-                                                    <th class="text-center">Cantidad</th>
-                                                    <th class="text-right">Precio</th>
-                                                    <th class="text-right">Total</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($order_items as $item): ?>
+                                    <?php if (!empty($order_items)): ?>
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($item['product_name']); ?></td>
-                                                        <td class="text-center"><?php echo $item['quantity']; ?></td>
-                                                        <td class="text-right">$<?php echo number_format($item['product_price'], 2); ?></td>
-                                                        <td class="text-right">$<?php echo number_format($item['total'], 2); ?></td>
+                                                        <th>Producto</th>
+                                                        <th class="text-center">Cantidad</th>
+                                                        <th class="text-right">Precio</th>
+                                                        <th class="text-right">Total</th>
                                                     </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                            <tfoot>
-                                                <tr class="font-weight-bold">
-                                                    <td colspan="3" class="text-right">Total del Pedido:</td>
-                                                    <td class="text-right">$<?php echo number_format($order['total'], 2); ?></td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($order_items as $item): ?>
+                                                        <tr>
+                                                            <td>
+                                                                <div class="product-info">
+                                                                    <?php
+                                                                    // Get product image from database
+                                                                    $product_query = "SELECT image FROM products WHERE id = :product_id";
+                                                                    $product_stmt = $db->prepare($product_query);
+                                                                    $product_stmt->execute(['product_id' => $item['product_id']]);
+                                                                    $product = $product_stmt->fetch(PDO::FETCH_ASSOC);
+                                                                    ?>
+                                                                    <?php if (!empty($product['image'])): ?>
+                                                                        <img src="<?php echo htmlspecialchars($product['image']); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="product-image" style="width: 50px; height: 50px; object-fit: cover; margin-right: 10px;">
+                                                                    <?php endif; ?>
+                                                                    <?php echo htmlspecialchars($item['product_name']); ?>
+                                                                </div>
+                                                            </td>
+                                                            <td class="text-center"><?php echo $item['quantity']; ?></td>
+                                                            <td class="text-right">$<?php echo number_format($item['product_price'], 2); ?></td>
+                                                            <td class="text-right">$<?php echo number_format($item['total'], 2); ?></td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr class="font-weight-bold">
+                                                        <td colspan="3" class="text-right">Total del Pedido:</td>
+                                                        <td class="text-right">$<?php echo number_format($order['total'], 2); ?></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            No se encontraron productos en este pedido. Esto puede deberse a un error en el procesamiento.
+                                        </div>
+                                    <?php endif; ?>
 
                                     <hr>
 

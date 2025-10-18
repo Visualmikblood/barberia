@@ -14,6 +14,16 @@ require_once '../classes/Cart.php';
 
 $database = new Database();
 $db = $database->getConnection();
+
+// Debug: Log session info
+error_log("API Cart - Session ID: " . session_id());
+error_log("API Cart - Cart session ID: " . ($_SESSION['cart_session_id'] ?? 'not set'));
+
+// Force session start if not already started
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 $cart = new Cart($db);
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -90,7 +100,6 @@ function handlePost($cart, $action) {
             $quantity = isset($data['quantity']) ? (int)$data['quantity'] : 1;
             error_log('Calling addToCart with product_id: ' . $data['product_id'] . ', quantity: ' . $quantity);
             $result = $cart->addToCart($data['product_id'], $quantity);
-            error_log('addToCart result: ' . print_r($result, true));
             echo json_encode($result);
             break;
 

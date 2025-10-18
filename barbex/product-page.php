@@ -485,9 +485,42 @@ $categories = $category_stmt->fetchAll();
 
 				this.saveCart();
 				this.updateCartCount();
+
+				// Sync with database
+				this.syncWithDatabase(product.id, 1);
+
 				this.showNotification('✅ Producto agregado al carrito!');
 				console.log('=== FINAL CART NOW HAS', this.cart.length, 'ITEMS ===');
 				return { success: true };
+			}
+
+			syncWithDatabase(productId, quantity) {
+				console.log('=== SYNCING WITH DATABASE ===');
+				console.log('Product ID:', productId, 'Quantity:', quantity);
+
+				fetch('/api/cart.php?action=add', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify({
+						product_id: productId,
+						quantity: quantity
+					})
+				})
+				.then(response => response.json())
+				.then(data => {
+					console.log('Database sync result:', data);
+					if (data.success) {
+						console.log('✅ Product synced with database');
+					} else {
+						console.error('❌ Database sync failed:', data.message);
+					}
+				})
+				.catch(error => {
+					console.error('❌ Database sync error:', error);
+				});
 			}
 
 			loadCart() {
