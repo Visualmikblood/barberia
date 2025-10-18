@@ -439,6 +439,7 @@ $order_stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
         <input type="hidden" name="payment_status" id="payment_status_input">
     </form>
 
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="../assets/js/jquery-3.6.0.min.js"></script>
     <script src="../assets/js/bootstrap.min.js"></script>
 
@@ -457,15 +458,33 @@ $order_stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         function updateOrderStatus(orderId, status) {
-            document.getElementById('order_id_input').value = orderId;
-            document.getElementById('order_status_input').value = status;
-            document.getElementById('updateOrderStatusForm').submit();
+            const statusText = {
+                'pending': 'Pendiente',
+                'processing': 'Procesando',
+                'shipped': 'Enviado',
+                'delivered': 'Entregado',
+                'cancelled': 'Cancelado'
+            };
+
+            if (confirm(`¿Estás seguro de cambiar el estado del pedido a "${statusText[status]}"?`)) {
+                document.getElementById('order_id_input').value = orderId;
+                document.getElementById('order_status_input').value = status;
+                document.getElementById('updateOrderStatusForm').submit();
+            }
         }
 
         function updatePaymentStatus(orderId, status) {
-            document.getElementById('payment_order_id_input').value = orderId;
-            document.getElementById('payment_status_input').value = status;
-            document.getElementById('updatePaymentStatusForm').submit();
+            const statusText = {
+                'pending': 'Pendiente',
+                'paid': 'Pagado',
+                'failed': 'Fallido'
+            };
+
+            if (confirm(`¿Estás seguro de cambiar el estado del pago a "${statusText[status]}"?`)) {
+                document.getElementById('payment_order_id_input').value = orderId;
+                document.getElementById('payment_status_input').value = status;
+                document.getElementById('updatePaymentStatusForm').submit();
+            }
         }
     </script>
 </body>
