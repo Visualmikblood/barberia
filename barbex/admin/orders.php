@@ -44,6 +44,12 @@ $search = $_GET['search'] ?? '';
 
 // Build query with filters
 $query = "SELECT o.*, u.name as customer_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1";
+
+// If no user is found, use the customer_name from the order itself
+$query = "SELECT o.*,
+         COALESCE(u.name, o.customer_name) as customer_name
+         FROM orders o
+         LEFT JOIN users u ON o.user_id = u.id WHERE 1=1";
 $params = [];
 
 if (!empty($status_filter)) {
@@ -68,7 +74,10 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
-$count_query = str_replace("SELECT o.*, u.name as customer_name FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1", "SELECT COUNT(*) as total FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1", $query);
+$count_query = str_replace("SELECT o.*,
+         COALESCE(u.name, o.customer_name) as customer_name
+         FROM orders o
+         LEFT JOIN users u ON o.user_id = u.id WHERE 1=1", "SELECT COUNT(*) as total FROM orders o LEFT JOIN users u ON o.user_id = u.id WHERE 1=1", $query);
 $count_query = str_replace(" ORDER BY o.created_at DESC", "", $count_query);
 
 $count_stmt = $db->prepare($count_query);
