@@ -6,101 +6,21 @@ require_once 'config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// Check if database connection is available
-if (!$db) {
-    die("Error: Database connection not available. Please check your database configuration.");
-}
+$order = null;
+if (isset($_GET['order_id'])) {
+    $order_id = (int)$_GET['order_id'];
 
-// Include cart class
-require_once 'classes/Cart.php';
+    // Get order details
+    $query = "SELECT * FROM orders WHERE id = :order_id";
+    $stmt = $db->prepare($query);
+    $stmt->execute(['order_id' => $order_id]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Initialize cart
-$cart = new Cart($db);
-
-// Get cart items
-$cart_items = $cart->getCartItems();
-$cart_total = $cart->getTotal();
-
-// Allow checkout even if cart is empty for testing
-// if (empty($cart_items)) {
-//     header('Location: product-page.php');
-//     exit;
-// }
-
-// Handle checkout form submission
-$message = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $first_name = trim($_POST['first_name'] ?? '');
-    $last_name = trim($_POST['last_name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $address = trim($_POST['address'] ?? '');
-    $city = trim($_POST['city'] ?? '');
-    $postcode = trim($_POST['postcode'] ?? '');
-    $notes = trim($_POST['notes'] ?? '');
-
-    if (empty($first_name) || empty($last_name) || empty($email) || empty($phone) || empty($address)) {
-        $message = '<div class="alert alert-danger">Please fill in all required fields</div>';
-    } else {
-        // Generate order number
-        $order_number = 'ORD-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
-
-        // Create order
-        $order_data = [
-            'user_id' => $_SESSION['user_id'] ?? null,
-            'session_id' => session_id(),
-            'order_number' => $order_number,
-            'customer_name' => $first_name . ' ' . $last_name,
-            'customer_email' => $email,
-            'customer_phone' => $phone,
-            'customer_address' => $address,
-            'customer_city' => $city,
-            'customer_postcode' => $postcode,
-            'customer_country' => 'Spain', // Default country
-            'subtotal' => $cart_total,
-            'tax' => 0,
-            'shipping' => 0,
-            'total' => $cart_total,
-            'payment_method' => 'cash_on_delivery',
-            'payment_status' => 'pending',
-            'order_status' => 'pending',
-            'notes' => $notes
-        ];
-
-        $query = "INSERT INTO orders (user_id, session_id, order_number, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_postcode, customer_country, subtotal, tax, shipping, total, payment_method, payment_status, order_status, notes, created_at) VALUES (:user_id, :session_id, :order_number, :customer_name, :customer_email, :customer_phone, :customer_address, :customer_city, :customer_postcode, :customer_country, :subtotal, :tax, :shipping, :total, :payment_method, :payment_status, :order_status, :notes, NOW())";
-        $stmt = $db->prepare($query);
-
-        foreach ($order_data as $key => $value) {
-            $stmt->bindValue(":$key", $value);
-        }
-
-        if ($stmt->execute()) {
-            $order_id = $db->lastInsertId();
-
-            // Insert order items
-            foreach ($cart_items as $item) {
-                $item_query = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, total) VALUES (:order_id, :product_id, :product_name, :product_price, :quantity, :total)";
-                $item_stmt = $db->prepare($item_query);
-                $item_stmt->execute([
-                    'order_id' => $order_id,
-                    'product_id' => $item['id'],
-                    'product_name' => $item['name'],
-                    'product_price' => $item['price'],
-                    'quantity' => $item['quantity'],
-                    'total' => $item['price'] * $item['quantity']
-                ]);
-            }
-
-            // Clear cart
-            $cart->clearCart();
-
-            // Redirect to success page
-            header("Location: checkout-success.php?order_id=$order_id");
-            exit;
-        } else {
-            $message = '<div class="alert alert-danger">Error processing order. Please try again.</div>';
-        }
-    }
+    // Get order items
+    $items_query = "SELECT * FROM order_items WHERE order_id = :order_id";
+    $items_stmt = $db->prepare($items_query);
+    $items_stmt->execute(['order_id' => $order_id]);
+    $order_items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 <!DOCTYPE html>
@@ -115,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<meta name="author" content="ThemeOri">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<!-- Title of Site -->
-	<title>Checkout - BarbeX Hair Salon</title>
+	<title>Order Success - BarbeX Hair Salon</title>
 	<!-- Favicons -->
 	<link rel="icon" type="image/png" href="assets/img/favicon.png">
 	<!-- Bootstrap CSS -->
@@ -208,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 						<div class="header__area-menubar-right-box-cart">
 							<a href="cart.php" class="header__area-menubar-right-box-cart-link">
 								<i class="fal fa-shopping-cart"></i>
-								<span class="cart-count"><?php echo count($cart_items); ?></span>
+								<span class="cart-count">0</span>
 							</a>
 						</div>
 						<div class="header__area-menubar-right-box-btn">
@@ -226,11 +146,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="row">
                 <div class="col-xl-12">
                     <div class="page__banner-title">
-                        <h1>Checkout</h1>
+                        <h1>Order Success</h1>
                         <div class="page__banner-title-menu">
                             <ul>
                                 <li><a href="#">Home</a></li>
-                                <li><span>_</span>Checkout</li>
+                                <li><span>_</span>Order Success</li>
                             </ul>
                         </div>
                     </div>
@@ -239,95 +159,142 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <!-- Page Banner End -->
-    <!-- Checkout Area Start -->
+    <!-- Checkout Success Area Start -->
     <div class="checkout__area section-padding">
         <div class="container">
-			<form action="checkout.php" method="POST">
-            <div class="row">
-				<div class="col-xl-8 col-lg-8 lg-mb-30">
-					<div class="checkout__area-left">
-						<div class="checkout__area-left-top">
-							<span>Have a Coupon<a href="#">Check here to enter your code</a></span>
-						</div>
-					</div>
-					<h4 class="pt-60 pb-60">Billing Details</h4>
-					<?php echo $message; ?>
-					<div class="checkout__area-left-form">
-						<div class="row">
-							<div class="col-md-6 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>First Name<span> *</span></label>
-									<input type="text" name="first_name" placeholder="First Name" required>
-								</div>
-							</div>
-							<div class="col-md-6 md-mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Last Name<span> *</span></label>
-									<input type="text" name="last_name" placeholder="Last Name" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Email Address<span> *</span></label>
-									<input type="email" name="email" placeholder="Email address" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Phone Number<span> *</span></label>
-									<input type="text" name="phone" placeholder="Phone" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Street Address<span> *</span></label>
-									<input type="text" name="address" placeholder="House number and Street name" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Town City<span> *</span></label>
-									<input type="text" name="city" placeholder="Town City" required>
-								</div>
-							</div>
-							<div class="col-md-12 mb-30">
-								<div class="checkout__area-left-form-list">
-									<label>Postcode / Zip<span> *</span></label>
-									<input type="text" name="postcode" placeholder="Postcode / Zip" required>
-								</div>
-							</div>
-							<div class="col-md-12 pt-60 pb-60">
-								<h3>Additional Information</h3>
-							</div>
-							<div class="col-md-12">
-								<div class="checkout__area-left-form-list">
-									<textarea name="notes" placeholder="Notes about Your Order"></textarea>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4 col-lg-4">
-                    <div class="all__sidebar">
-                        <div class="all__sidebar-item">
-                            <h5>Your Order</h5>
-                            <div class="all__sidebar-item-cart">
-                                <ul>
-									<?php foreach ($cart_items as $item): ?>
-									<li><?php echo htmlspecialchars($item['name']); ?> X <?php echo $item['quantity']; ?><span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span></li>
-									<?php endforeach; ?>
-									<li>Total<span>$<?php echo number_format($cart_total, 2); ?></span></li>
-                                </ul>
+            <div class="row justify-content-center">
+                <div class="col-xl-8 col-lg-10">
+                    <?php if ($order): ?>
+                        <div class="text-center mb-5">
+                            <div class="success-icon mb-4">
+                                <i class="fas fa-check-circle" style="font-size: 80px; color: #28a745;"></i>
                             </div>
-							<button class="theme-btn" type="submit">Place Order<i class="far fa-angle-double-right"></i></button>
+                            <h2 class="mb-3">¡Pedido realizado con éxito!</h2>
+                            <p class="mb-4">Gracias por tu compra. Tu pedido ha sido procesado correctamente.</p>
                         </div>
-                    </div>
-				</div>
+
+                        <div class="order-details-card">
+                            <div class="card shadow">
+                                <div class="card-header bg-primary text-white">
+                                    <h4 class="mb-0">Detalles del Pedido</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Número de Pedido:</strong><br>
+                                            <span class="text-primary">#<?php echo htmlspecialchars($order['order_number']); ?></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Fecha del Pedido:</strong><br>
+                                            <?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?>
+                                        </div>
+                                    </div>
+
+                                    <hr>
+
+                                    <h5>Información del Cliente</h5>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Nombre:</strong><br>
+                                            <?php echo htmlspecialchars($order['customer_name']); ?>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Email:</strong><br>
+                                            <?php echo htmlspecialchars($order['customer_email']); ?>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <strong>Teléfono:</strong><br>
+                                            <?php echo htmlspecialchars($order['customer_phone']); ?>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Ciudad:</strong><br>
+                                            <?php echo htmlspecialchars($order['customer_city']); ?>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Dirección:</strong><br>
+                                        <?php echo htmlspecialchars($order['customer_address']); ?>
+                                        <?php if ($order['customer_postcode']): ?>
+                                            <br>Código Postal: <?php echo htmlspecialchars($order['customer_postcode']); ?>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <?php if ($order['notes']): ?>
+                                        <div class="mb-3">
+                                            <strong>Notas del Pedido:</strong><br>
+                                            <?php echo htmlspecialchars($order['notes']); ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <hr>
+
+                                    <h5>Productos del Pedido</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Producto</th>
+                                                    <th class="text-center">Cantidad</th>
+                                                    <th class="text-right">Precio</th>
+                                                    <th class="text-right">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($order_items as $item): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($item['product_name']); ?></td>
+                                                        <td class="text-center"><?php echo $item['quantity']; ?></td>
+                                                        <td class="text-right">$<?php echo number_format($item['product_price'], 2); ?></td>
+                                                        <td class="text-right">$<?php echo number_format($item['total'], 2); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="font-weight-bold">
+                                                    <td colspan="3" class="text-right">Total del Pedido:</td>
+                                                    <td class="text-right">$<?php echo number_format($order['total'], 2); ?></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                    <hr>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Estado del Pago:</strong><br>
+                                            <span class="badge badge-warning"><?php echo ucfirst($order['payment_status']); ?></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Estado del Pedido:</strong><br>
+                                            <span class="badge badge-info"><?php echo ucfirst($order['order_status']); ?></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <p class="mb-3">¿Quieres seguir comprando?</p>
+                            <a href="product-page.php" class="theme-btn">Continuar Comprando<i class="far fa-angle-double-right"></i></a>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center">
+                            <div class="error-icon mb-4">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 80px; color: #dc3545;"></i>
+                            </div>
+                            <h2 class="mb-3">Pedido no encontrado</h2>
+                            <p class="mb-4">Lo sentimos, no se pudo encontrar información sobre este pedido.</p>
+                            <a href="product-page.php" class="theme-btn">Volver a la Tienda<i class="far fa-angle-double-right"></i></a>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-			</form>
         </div>
     </div>
-    <!-- Checkout Area End -->
+    <!-- Checkout Success Area End -->
 	<!-- Newsletter Area Start -->
     <div class="newsletter__area">
         <div class="container">
@@ -418,7 +385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								<li><a href="#"><i class="fab fa-snapchat"></i></a></li>
 								<li><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
 							</ul>
-						</div>
+                        </div>
 					</div>
 				</div>
 			</div>
