@@ -1,3 +1,23 @@
+<?php
+require_once 'config/database.php';
+
+$database = new Database();
+$db = $database->getConnection();
+
+// Get blog posts from database
+try {
+    $query = "SELECT bp.*, u.name as author_name
+              FROM blog_posts bp
+              LEFT JOIN users u ON bp.author_id = u.id
+              WHERE bp.status = 'published'
+              ORDER BY bp.created_at DESC";
+    $stmt = $db->query($query);
+    $blog_posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $blog_posts = [];
+    error_log('Blog grid error: ' . $e->getMessage());
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -26,7 +46,7 @@
 	<!-- Mean menu -->
 	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="assets/sass/style.css"> 
+	<link rel="stylesheet" href="assets/sass/style.css">
 </head>
 
 <body>
@@ -78,9 +98,9 @@
 								</li>
 								<li class="menu-item-has-children"><a href="#">Blog</a>
 									<ul class="sub-menu">
-										<li><a href="blog-grid.html">Blog Grid</a></li>
-										<li><a href="blog-standard.html">Blog Standard</a></li>
-										<li><a href="blog-details.html">Blog Details</a></li>
+										<li><a href="blog-grid.php">Blog Grid</a></li>
+										<li><a href="blog-standard.php">Blog Standard</a></li>
+										<li><a href="blog-details.php">Blog Details</a></li>
 									</ul>
 								</li>
 								<li><a href="contact.html">Contact</a></li>
@@ -128,163 +148,47 @@
         </div>
     </div>
     <!-- Page Banner End -->	
-	<!-- Blog Area Start -->	
+	<!-- Blog Area Start -->
 	<div class="blog__area section-padding">
 		<div class="container">
 			<div class="row">
-				<div class="col-xl-4 mb-30">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-1.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Haircutting</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>30 June, 2022</a></li>
-								</ul>
+				<?php if (!empty($blog_posts)): ?>
+					<?php foreach ($blog_posts as $index => $post): ?>
+					<div class="col-xl-4 <?php echo ($index < 3) ? 'mb-30' : ''; ?>">
+						<div class="blog__area-item">
+							<div class="blog__area-item-image">
+								<a href="blog-details.php?id=<?php echo $post['id']; ?>">
+									<?php if (!empty($post['featured_image'])): ?>
+										<img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>">
+									<?php else: ?>
+										<img src="assets/img/blog/blog-<?php echo (($index % 12) + 1); ?>.jpg" alt="<?php echo htmlspecialchars($post['title']); ?>">
+									<?php endif; ?>
+								</a>
 							</div>
-							<h4><a href="blog-details.html">We are a Haircut Salon Based in South Melbourne</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
+							<div class="blog__area-item-content">
+								<div class="blog__area-item-content-meta">
+									<ul>
+										<li><a href="#"><span><?php echo htmlspecialchars($post['category'] ?? 'General'); ?></span></a></li>
+										<li><a href="#"><i class="fal fa-calendar-alt"></i><?php echo date('d M, Y', strtotime($post['created_at'])); ?></a></li>
+									</ul>
+								</div>
+								<h4><a href="blog-details.php?id=<?php echo $post['id']; ?>"><?php echo htmlspecialchars($post['title']); ?></a></h4>
+								<?php if (!empty($post['excerpt'])): ?>
+									<p><?php echo htmlspecialchars(substr($post['excerpt'], 0, 100)) . (strlen($post['excerpt']) > 100 ? '...' : ''); ?></p>
+								<?php endif; ?>
+								<a href="blog-details.php?id=<?php echo $post['id']; ?>" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>
+							</div>
 						</div>
 					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-2.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Hair Color</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>25 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">Hair coloring kit and hair Dye color</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
+					<?php endforeach; ?>
+				<?php else: ?>
+					<div class="col-12">
+						<div class="text-center">
+							<h3>No blog posts found</h3>
+							<p>There are no published blog posts at the moment.</p>
 						</div>
 					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-3.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Lather Shave</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>21 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">The Best Lather Shave Product in Market</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4 mb-30">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-7.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Hair Wash</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>20 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">Best Hair Washing Machine for Home</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-12.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Oil Massage</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>19 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">Organic Massage Oil for Sensitive Skin</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-8.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Facial Hair</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>17 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">Customising your shave is Fun and easy</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-9.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Facial Mask</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>15 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">The most affordable World Facial Mask</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-10.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Hair shining</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>14 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">Best Hair Shiner, Hair Shine, & Hair Conditioner</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
-				<div class="col-xl-4">
-					<div class="blog__area-item">
-						<div class="blog__area-item-image">
-							<a href="blog-details.html"><img src="assets/img/blog/blog-11.jpg" alt=""></a>
-						</div>
-						<div class="blog__area-item-content">
-							<div class="blog__area-item-content-meta">
-								<ul>
-									<li><a href="#"><span>Hair care</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>12 June, 2022</a></li>
-								</ul>
-							</div>
-							<h4><a href="blog-details.html">Best Hair Care Solution for Dry Skin & Scalp</a></h4>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>	
-						</div>
-					</div>
-				</div>
+				<?php endif; ?>
 			</div>
 			<div class="row">
 				<div class="col-xl-12">

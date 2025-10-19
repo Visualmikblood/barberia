@@ -1,3 +1,51 @@
+<?php
+require_once 'config/database.php';
+
+$database = new Database();
+$db = $database->getConnection();
+
+// Get blog posts from database
+try {
+    $query = "SELECT bp.*, u.name as author_name
+              FROM blog_posts bp
+              LEFT JOIN users u ON bp.author_id = u.id
+              WHERE bp.status = 'published'
+              ORDER BY bp.created_at DESC";
+    $stmt = $db->query($query);
+    $blog_posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $blog_posts = [];
+    error_log('Blog standard error: ' . $e->getMessage());
+}
+
+// Get recent posts for sidebar
+try {
+    $recent_query = "SELECT bp.*, u.name as author_name
+                     FROM blog_posts bp
+                     LEFT JOIN users u ON bp.author_id = u.id
+                     WHERE bp.status = 'published'
+                     ORDER BY bp.created_at DESC
+                     LIMIT 3";
+    $recent_stmt = $db->query($recent_query);
+    $recent_posts = $recent_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $recent_posts = [];
+}
+
+// Get categories for sidebar
+try {
+    $categories_query = "SELECT bc.*, COUNT(bp.id) as post_count
+                         FROM blog_categories bc
+                         LEFT JOIN blog_posts bp ON bc.name = bp.category AND bp.status = 'published'
+                         WHERE bc.status = 'active'
+                         GROUP BY bc.id
+                         ORDER BY bc.name";
+    $categories_stmt = $db->query($categories_query);
+    $categories = $categories_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $categories = [];
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -26,7 +74,7 @@
 	<!-- Mean menu -->
 	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
 	<!-- Custom CSS -->
-	<link rel="stylesheet" href="assets/sass/style.css"> 
+	<link rel="stylesheet" href="assets/sass/style.css">
 </head>
 
 <body>
@@ -78,9 +126,9 @@
 								</li>
 								<li class="menu-item-has-children"><a href="#">Blog</a>
 									<ul class="sub-menu">
-										<li><a href="blog-grid.html">Blog Grid</a></li>
-										<li><a href="blog-standard.html">Blog Standard</a></li>
-										<li><a href="blog-details.html">Blog Details</a></li>
+										<li><a href="blog-grid.php">Blog Grid</a></li>
+										<li><a href="blog-standard.php">Blog Standard</a></li>
+										<li><a href="blog-details.php">Blog Details</a></li>
 									</ul>
 								</li>
 								<li><a href="contact.html">Contact</a></li>
@@ -129,57 +177,42 @@
     </div>
     <!-- Page Banner End -->
 	<!-- Blog Standard Start -->
-    <div class="blog__standard section-padding">
-        <div class="container">
-            <div class="row">
-                <div class="col-xl-8 col-lg-8 lg-mb-30">
-                    <div class="blog__standard-left">
-						<div class="blog__standard-left-item mb-40">
-							<div class="blog__standard-left-item-image">
-								<a href="blog-details.html"><img src="assets/img/blog/blog-13.jpg" alt=""></a>
-							</div>
-							<div class="blog__standard-left-item-meta">
-								<ul>
-									<li><a href="#"><span>Haircutting</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>07, March 2022</a></li>
-									<li><a href="#"><i class="fal fa-comments"></i>3 Comment</a></li>
-								</ul>
-							</div>
-							<h3 class="mb-20"><a href="blog-details.html">Salon is your best place to find the Perfect haircut</a></h3>
-							<p class="mb-20">Maecenas tincidunt hendrerit odio sed consectetur. Duis porta purus sapien, eget pretium augue consectetur ut. Nunc nibh augue, pretium quis imperdiet pellentesque, molestie eget nisi. Sed rutrum sit amet eros ac egestas. Maecenas tincidunt dolor in massa iaculis, vitae dignissim sem finibus. Pellentesque elementum vel arcu sit amet rhoncus.</p>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>
-						</div>
-						<div class="blog__standard-left-item mb-40">
-							<div class="blog__standard-left-item-image">
-								<a href="blog-details.html"><img src="assets/img/blog/blog-2.jpg" alt=""></a>
-							</div>
-							<div class="blog__standard-left-item-meta">
-								<ul>
-									<li><a href="#"><span>Haircutting</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>07, March 2022</a></li>
-									<li><a href="#"><i class="fal fa-comments"></i>3 Comment</a></li>
-								</ul>
-							</div>
-							<h3 class="mb-20"><a href="blog-details.html">Best Hair Care Solution for Dry Skin & Scalp</a></h3>
-							<p class="mb-20">Maecenas tincidunt hendrerit odio sed consectetur. Duis porta purus sapien, eget pretium augue consectetur ut. Nunc nibh augue, pretium quis imperdiet pellentesque, molestie eget nisi. Sed rutrum sit amet eros ac egestas. Maecenas tincidunt dolor in massa iaculis, vitae dignissim sem finibus. Pellentesque elementum vel arcu sit amet rhoncus.</p>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>
-						</div>
-						<div class="blog__standard-left-item">
-							<div class="blog__standard-left-item-image">
-								<a href="blog-details.html"><img src="assets/img/blog/blog-1.jpg" alt=""></a>
-							</div>
-							<div class="blog__standard-left-item-meta">
-								<ul>
-									<li><a href="#"><span>Haircutting</span></a></li>
-									<li><a href="#"><i class="fal fa-calendar-alt"></i>07, March 2022</a></li>
-									<li><a href="#"><i class="fal fa-comments"></i>3 Comment</a></li>
-								</ul>
-							</div>
-							<h3 class="mb-20"><a href="blog-details.html">We are a Haircut Salon Based in South Melbourne</a></h3>
-							<p class="mb-20">Maecenas tincidunt hendrerit odio sed consectetur. Duis porta purus sapien, eget pretium augue consectetur ut. Nunc nibh augue, pretium quis imperdiet pellentesque, molestie eget nisi. Sed rutrum sit amet eros ac egestas. Maecenas tincidunt dolor in massa iaculis, vitae dignissim sem finibus. Pellentesque elementum vel arcu sit amet rhoncus.</p>
-							<a href="blog-details.html" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>
-						</div>						
-                    </div>
+	   <div class="blog__standard section-padding">
+	       <div class="container">
+	           <div class="row">
+	               <div class="col-xl-8 col-lg-8 lg-mb-30">
+	                   <div class="blog__standard-left">
+	                       <?php if (!empty($blog_posts)): ?>
+	                           <?php foreach ($blog_posts as $post): ?>
+	                               <div class="blog__standard-left-item mb-40">
+	                                   <div class="blog__standard-left-item-image">
+	                                       <a href="blog-details.php?id=<?php echo $post['id']; ?>">
+	                                           <?php if (!empty($post['featured_image'])): ?>
+	                                               <img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>">
+	                                           <?php else: ?>
+	                                               <img src="assets/img/blog/blog-<?php echo (($post['id'] % 12) + 1); ?>.jpg" alt="<?php echo htmlspecialchars($post['title']); ?>">
+	                                           <?php endif; ?>
+	                                       </a>
+	                                   </div>
+	                                   <div class="blog__standard-left-item-meta">
+	                                       <ul>
+	                                           <li><a href="#"><span><?php echo htmlspecialchars($post['category'] ?? 'General'); ?></span></a></li>
+	                                           <li><a href="#"><i class="fal fa-calendar-alt"></i><?php echo date('d, M Y', strtotime($post['created_at'])); ?></a></li>
+	                                           <li><a href="#"><i class="fal fa-user"></i><?php echo htmlspecialchars($post['author_name'] ?? 'Admin'); ?></a></li>
+	                                       </ul>
+	                                   </div>
+	                                   <h3 class="mb-20"><a href="blog-details.php?id=<?php echo $post['id']; ?>"><?php echo htmlspecialchars($post['title']); ?></a></h3>
+	                                   <p class="mb-20"><?php echo htmlspecialchars(substr($post['content'], 0, 200)) . (strlen($post['content']) > 200 ? '...' : ''); ?></p>
+	                                   <a href="blog-details.php?id=<?php echo $post['id']; ?>" class="simple-btn">Read More<i class="far fa-angle-double-right"></i></a>
+	                               </div>
+	                           <?php endforeach; ?>
+	                       <?php else: ?>
+	                           <div class="text-center">
+	                               <h3>No blog posts found</h3>
+	                               <p>There are no published blog posts at the moment.</p>
+	                           </div>
+	                       <?php endif; ?>
+	                   </div>
 					<div class="theme__pagination mt-50">
 						<ul>
 							<li><a class="active" href="#">01</a>
@@ -192,7 +225,7 @@
 							</li>
 						</ul>
 					</div>
-                </div>
+	               </div>
                 <div class="col-xl-4 col-lg-4">
 					<div class="all__sidebar-item-search ml-25 xl-ml-0 mb-40">
 						<form action="#">
@@ -204,59 +237,56 @@
                         <div class="all__sidebar-item">
                             <h5>Top Category</h5>
                             <div class="all__sidebar-item-category">
-                                <ul>                                    
-                                    <li><a href="blog-standard.html"><i class="far fa-angle-double-right"></i>Trending Haircut<span>(08)</span></a></li>
-                                    <li><a href="blog-standard.html"><i class="far fa-angle-double-right"></i>Hair Washing<span>(06)</span></a></li>
-                                    <li><a href="blog-standard.html"><i class="far fa-angle-double-right"></i>Lather shave<span>(05)</span></a></li>
-                                    <li><a href="blog-standard.html"><i class="far fa-angle-double-right"></i>Facial Hair trip<span>(09)</span></a></li>
-                                    <li><a href="blog-standard.html"><i class="far fa-angle-double-right"></i>Head Massage<span>(03)</span></a></li>
-                                    <li><a href="blog-standard.html"><i class="far fa-angle-double-right"></i>Hair Coloring<span>(02)</span></a></li>
+                                <ul>
+                                    <?php if (!empty($categories)): ?>
+                                        <?php foreach ($categories as $category): ?>
+                                            <li><a href="blog-standard.php?category=<?php echo urlencode($category['name']); ?>"><i class="far fa-angle-double-right"></i><?php echo htmlspecialchars($category['name']); ?><span>(<?php echo $category['post_count']; ?>)</span></a></li>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <li><a href="#"><i class="far fa-angle-double-right"></i>No categories<span>(0)</span></a></li>
+                                    <?php endif; ?>
                                 </ul>
                             </div>
                         </div>
                         <div class="all__sidebar-item mt-40">
                             <h5>Recent Post</h5>
                             <div class="all__sidebar-item-post">
-                                <div class="all__sidebar-item-post-item">
-                                    <div class="all__sidebar-item-post-item-image">
-                                        <a href="blog-details.html"><img src="assets/img/blog/post-1.jpg" alt=""></a>
+                                <?php if (!empty($recent_posts)): ?>
+                                    <?php foreach ($recent_posts as $recent_post): ?>
+                                        <div class="all__sidebar-item-post-item">
+                                            <div class="all__sidebar-item-post-item-image">
+                                                <a href="blog-details.php?id=<?php echo $recent_post['id']; ?>">
+                                                    <?php if (!empty($recent_post['featured_image'])): ?>
+                                                        <img src="<?php echo htmlspecialchars($recent_post['featured_image']); ?>" alt="<?php echo htmlspecialchars($recent_post['title']); ?>">
+                                                    <?php else: ?>
+                                                        <img src="assets/img/blog/post-<?php echo (($recent_post['id'] % 3) + 1); ?>.jpg" alt="<?php echo htmlspecialchars($recent_post['title']); ?>">
+                                                    <?php endif; ?>
+                                                </a>
+                                            </div>
+                                            <div class="all__sidebar-item-post-item-content">
+                                                <span><i class="fal fa-calendar-alt"></i><?php echo date('d M, Y', strtotime($recent_post['created_at'])); ?></span>
+                                                <h6><a href="blog-details.php?id=<?php echo $recent_post['id']; ?>"><?php echo htmlspecialchars(substr($recent_post['title'], 0, 30)) . (strlen($recent_post['title']) > 30 ? '...' : ''); ?></a></h6>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="text-center">
+                                        <p>No recent posts</p>
                                     </div>
-                                    <div class="all__sidebar-item-post-item-content">
-                                        <span><i class="fal fa-calendar-alt"></i>05 June, 2022</span>
-                                        <h6><a href="blog-details.html">Science of Create Beautiful Hair</a></h6>
-                                    </div>
-                                </div>
-                                <div class="all__sidebar-item-post-item">
-                                    <div class="all__sidebar-item-post-item-image">
-                                        <a href="blog-details.html"><img src="assets/img/blog/post-2.jpg" alt=""></a>
-                                    </div>
-                                    <div class="all__sidebar-item-post-item-content">
-                                        <span><i class="fal fa-calendar-alt"></i>02 June, 2022</span>
-                                        <h6><a href="blog-details.html">Science of Create Beautiful Hair</a></h6>
-                                    </div>
-                                </div>
-                                <div class="all__sidebar-item-post-item">
-                                    <div class="all__sidebar-item-post-item-image">
-                                        <a href="blog-details.html"><img src="assets/img/blog/post-3.jpg" alt=""></a>
-                                    </div>
-                                    <div class="all__sidebar-item-post-item-content">
-                                        <span><i class="fal fa-calendar-alt"></i>04 June, 2022</span>
-                                        <h6><a href="blog-details.html">Science of Create Beautiful Hair</a></h6>
-                                    </div>
-                                </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="all__sidebar-item mt-40">
                             <h5>Tags</h5>
                             <div class="all__sidebar-item-tag">
                                 <ul>
-                                    <li><a href="blog-standard.html">Design</a></li>
-                                    <li><a href="blog-standard.html">Brochure</a></li>
-                                    <li><a href="blog-standard.html">Product</a></li>
-                                    <li><a href="blog-standard.html">Business</a></li>
-                                    <li><a href="blog-standard.html">Development</a></li>
-                                    <li><a href="blog-standard.html">Marketing</a></li>
-                                    <li><a href="blog-standard.html">Branding</a></li>
+                                    <li><a href="blog-standard.php">Design</a></li>
+                                    <li><a href="blog-standard.php">Brochure</a></li>
+                                    <li><a href="blog-standard.php">Product</a></li>
+                                    <li><a href="blog-standard.php">Business</a></li>
+                                    <li><a href="blog-standard.php">Development</a></li>
+                                    <li><a href="blog-standard.php">Marketing</a></li>
+                                    <li><a href="blog-standard.php">Branding</a></li>
                                 </ul>
                             </div>
                         </div>

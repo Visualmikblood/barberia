@@ -1,0 +1,605 @@
+<?php
+require_once 'config/database.php';
+
+$database = new Database();
+$db = $database->getConnection();
+
+// Get post ID from URL
+$post_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+
+// Get blog post details
+$post = null;
+if ($post_id > 0) {
+    try {
+        $query = "SELECT bp.*, u.name as author_name
+                  FROM blog_posts bp
+                  LEFT JOIN users u ON bp.author_id = u.id
+                  WHERE bp.id = :id AND bp.status = 'published'";
+        $stmt = $db->prepare($query);
+        $stmt->execute(['id' => $post_id]);
+        $post = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log('Blog details error: ' . $e->getMessage());
+    }
+}
+
+// Get recent posts for sidebar
+try {
+    $recent_query = "SELECT bp.*, u.name as author_name
+                     FROM blog_posts bp
+                     LEFT JOIN users u ON bp.author_id = u.id
+                     WHERE bp.status = 'published' AND bp.id != :current_id
+                     ORDER BY bp.created_at DESC
+                     LIMIT 3";
+    $recent_stmt = $db->prepare($recent_query);
+    $recent_stmt->execute(['current_id' => $post_id]);
+    $recent_posts = $recent_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $recent_posts = [];
+}
+
+// Get categories for sidebar
+try {
+    $categories_query = "SELECT bc.*, COUNT(bp.id) as post_count
+                         FROM blog_categories bc
+                         LEFT JOIN blog_posts bp ON bc.name = bp.category AND bp.status = 'published'
+                         WHERE bc.status = 'active'
+                         GROUP BY bc.id
+                         ORDER BY bc.name";
+    $categories_stmt = $db->query($categories_query);
+    $categories = $categories_stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $categories = [];
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<!-- Start Meta -->
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="description="BarbeX - Hair Salon HTML5 Template"/>
+	<meta name="keywords" content="Creative, Digital, multipage, landing, freelancer template"/>
+	<meta name="author" content="ThemeOri">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<!-- Title of Site -->
+	<title><?php echo $post ? htmlspecialchars($post['title']) : 'Blog Details'; ?> - BarbeX</title>
+	<!-- Favicons -->
+	<link rel="icon" type="image/png" href="assets/img/favicon.png">
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+	<!-- font awesome -->
+	<link rel="stylesheet" href="assets/css/all.css">
+	<!-- Animate CSS -->
+	<link rel="stylesheet" href="assets/css/animate.css">
+	<!-- Swiper -->
+	<link rel="stylesheet" href="assets/css/swiper-bundle.min.css">
+	<!-- Magnific -->
+	<link rel="stylesheet" href="assets/css/magnific-popup.css">
+	<!-- Mean menu -->
+	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
+	<!-- Custom CSS -->
+	<link rel="stylesheet" href="assets/sass/style.css">
+</head>
+
+<body>
+	<!-- Preloader start -->
+	<div class="theme-loader">
+		<div class="spinner">
+			<div class="double-bounce1"></div>
+			<div class="double-bounce2"></div>
+		</div>
+	</div>
+	<!-- Preloader end -->
+	<!-- Header Area Start -->
+	<div class="header__sticky">
+		<div class="header__area two">
+			<div class="container custom__container">
+				<div class="header__area-menubar">
+					<div class="header__area-menubar-left">
+						<div class="header__area-menubar-left-logo">
+							<a href="index.html"><img src="assets/img/logo-2.png" alt=""></a>
+							<div class="responsive-menu"></div>
+						</div>
+					</div>
+					<div class="header__area-menubar-right two">
+						<div class="header__area-menubar-right-menu menu-responsive">						
+							<ul id="mobilemenu">
+								<li class="menu-item-has-children"><a href="#">Home</a>
+									<ul class="sub-menu">
+										<li><a href="index.html">Home 01</a></li>
+										<li><a href="index-2.html">Home 02</a></li>
+										<li><a href="index-3.html">Home 03</a></li>									
+									</ul>
+								</li>
+								<li class="menu-item-has-children"><a href="#">Pages</a>
+									<ul class="sub-menu">
+										<li><a href="about.html">About</a></li>
+										<li><a href="price.html">Price</a></li>
+										<li><a href="team.html">Team</a></li>
+										<li><a href="services.html">Services</a></li>
+										<li><a href="services-details.html">Services Details</a></li>
+									</ul>
+								</li>
+								<li class="menu-item-has-children"><a href="#">Shop</a>
+									<ul class="sub-menu">
+										<li><a href="product-page.html">Product Page</a></li>
+										<li><a href="product-details.html">Product Details</a></li>
+										<li><a href="cart.html">Cart</a></li>
+										<li><a href="checkout.html">Checkout</a></li>
+									</ul>
+								</li>
+								<li class="menu-item-has-children"><a href="#">Blog</a>
+									<ul class="sub-menu">
+										<li><a href="blog-grid.php">Blog Grid</a></li>
+										<li><a href="blog-standard.php">Blog Standard</a></li>
+										<li><a href="blog-details.php">Blog Details</a></li>
+									</ul>
+								</li>
+								<li><a href="contact.html">Contact</a></li>
+							</ul>
+						</div>
+					</div>
+					<div class="header__area-menubar-right-box">
+						<div class="header__area-menubar-right-box-search">
+							<div class="search">	
+								<span class="header__area-menubar-right-box-search-icon two open"><i class="fal fa-search"></i></span>
+							</div>
+							<div class="header__area-menubar-right-box-search-box">
+								<form>
+									<input type="search" placeholder="Search Here.....">
+									<button type="submit"><i class="fal fa-search"></i>
+									</button>
+								</form> <span class="header__area-menubar-right-box-search-box-icon"><i class="fal fa-times"></i></span>
+							</div>
+						</div>	
+						<div class="header__area-menubar-right-box-btn">
+							<a href="contact.html" class="theme-border-btn">Get A Quote<i class="far fa-angle-double-right"></i></a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Header Area End -->	
+    <!-- Page Banner Start -->
+    <div class="page__banner" data-background="assets/img/bg/page.jpg">
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="page__banner-title">
+                        <h1>Blog Details</h1>
+                        <div class="page__banner-title-menu">
+                            <ul>
+                                <li><a href="#">Home</a></li>
+                                <li><span>_</span>Blog Details</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Page Banner End -->
+	<!-- Blog Details Start -->
+	   <div class="blog__details section-padding">
+	       <div class="container">
+	           <div class="row">
+	               <div class="col-xl-8 col-lg-8 lg-mb-30">
+	                   <div class="blog__details-left">
+	                       <?php if ($post): ?>
+	                           <?php if (!empty($post['featured_image'])): ?>
+	                               <img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>">
+	                           <?php else: ?>
+	                               <img src="assets/img/blog/blog-<?php echo (($post['id'] % 12) + 1); ?>.jpg" alt="<?php echo htmlspecialchars($post['title']); ?>">
+	                           <?php endif; ?>
+
+	                           <div class="blog__details-left-meta">
+	                               <ul>
+	                                   <li><a href="#"><span><?php echo htmlspecialchars($post['category'] ?? 'General'); ?></span></a></li>
+	                                   <li><a href="#"><i class="fal fa-user"></i>By - <?php echo htmlspecialchars($post['author_name'] ?? 'Admin'); ?></a></li>
+	                                   <li><a href="#"><i class="fal fa-calendar-alt"></i><?php echo date('d, M Y', strtotime($post['created_at'])); ?></a></li>
+	                                   <li><a href="#"><i class="fal fa-comments"></i>0 Comments</a></li>
+	                               </ul>
+	                           </div>
+
+	                           <h3 class="mb-20"><?php echo htmlspecialchars($post['title']); ?></h3>
+
+	                           <?php
+	                           // Split content into paragraphs
+	                           $content_parts = explode("\n\n", $post['content']);
+	                           foreach ($content_parts as $index => $part):
+	                               $part = trim($part);
+	                               if (!empty($part)):
+	                                   if ($index == 0): ?>
+	                                       <p class="mb-20"><?php echo nl2br(htmlspecialchars($part)); ?></p>
+	                                   <?php elseif ($index == 1): ?>
+	                                       <p><?php echo nl2br(htmlspecialchars($part)); ?></p>
+	                                   <?php elseif ($index == 2): ?>
+	                                       <div class="blog__details-left-box">
+	                                           <p><?php echo nl2br(htmlspecialchars($part)); ?></p>
+	                                           <h6><?php echo htmlspecialchars($post['author_name'] ?? 'Admin'); ?></h6>
+	                                       </div>
+	                                   <?php else: ?>
+	                                       <p><?php echo nl2br(htmlspecialchars($part)); ?></p>
+	                                   <?php endif;
+	                               endif;
+	                           endforeach;
+	                           ?>
+
+	                           <div class="row mt-40 mb-40">
+	                               <div class="col-sm-6 sm-mb-30">
+	                                   <div class="blog__details-left-list">
+	                                       <img class="img__full" src="assets/img/blog/details-1.jpg" alt="">
+	                                   </div>
+	                               </div>
+	                               <div class="col-sm-6">
+	                                   <div class="blog__details-left-list blog__details-left-list-hover">
+	                                       <img class="img__full" src="assets/img/blog/details-2.jpg" alt="">
+	                                   </div>
+	                               </div>
+	                           </div>
+
+	                           <?php if (!empty($post['excerpt'])): ?>
+	                               <p class="mb-20"><?php echo nl2br(htmlspecialchars($post['excerpt'])); ?></p>
+	                           <?php endif; ?>
+
+	                           <div class="blog__details-left-related">
+	                               <div class="row align-items-center">
+	                                   <div class="col-md-7 md-mb-10">
+	                                       <div class="blog__details-left-related-tag">
+	                                           <h6>Tags :</h6>
+	                                           <ul>
+	                                               <?php
+	                                               $tags = explode(',', $post['tags'] ?? '');
+	                                               foreach ($tags as $tag):
+	                                                   $tag = trim($tag);
+	                                                   if (!empty($tag)):
+	                                               ?>
+	                                                   <li><a href="blog-standard.php?tag=<?php echo urlencode($tag); ?>"><?php echo htmlspecialchars($tag); ?></a></li>
+	                                               <?php
+	                                                   endif;
+	                                               endforeach;
+	                                               ?>
+	                                           </ul>
+	                                       </div>
+	                                   </div>
+	                                   <div class="col-md-5 t-right md-t-left">
+	                                       <div class="blog__details-left-related-share">
+	                                           <ul>
+	                                               <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+	                                               <li><a href="#"><i class="fab fa-twitter"></i></a></li>
+	                                               <li><a href="#"><i class="fab fa-behance"></i></a></li>
+	                                               <li><a href="#"><i class="fab fa-youtube"></i></a></li>
+	                                               <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
+	                                           </ul>
+	                                       </div>
+	                                   </div>
+	                               </div>
+	                           </div>
+
+	                           <div class="blog__details-left-post mb-55">
+	                               <div class="blog__details-left-post-author">
+	                                   <div class="blog__details-left-post-author-image">
+	                                       <img class="img__full" src="assets/img/avatar/author.jpg" alt="">
+	                                   </div>
+	                                   <div class="blog__details-left-post-author-content">
+	                                       <h4><?php echo htmlspecialchars($post['author_name'] ?? 'Admin'); ?></h4>
+	                                       <p><?php echo htmlspecialchars($post['excerpt'] ?? 'Author of this blog post.'); ?></p>
+	                                   </div>
+	                               </div>
+	                           </div>
+
+	                           <div class="blog__details-left-comment mb-55">
+	                               <h4 class="mb-40">Comments (0)</h4>
+	                               <p>No comments yet. Be the first to comment!</p>
+	                           </div>
+
+	                           <div class="blog__details-left-contact">
+	                               <h4 class="mb-40">Add Comment</h4>
+	                               <div class="blog__details-left-contact-form">
+	                                   <form action="#">
+	                                       <div class="row">
+	                                           <div class="col-sm-6 mb-30">
+	                                               <div class="blog__details-left-contact-form-item">
+	                                                   <i class="fal fa-user"></i>
+	                                                   <input type="text" name="name" placeholder="Full Name" required="required">
+	                                               </div>
+	                                           </div>
+	                                           <div class="col-sm-6 sm-mb-30">
+	                                               <div class="blog__details-left-contact-form-item">
+	                                                   <i class="fal fa-envelope"></i>
+	                                                   <input type="text" name="email" placeholder="Email Address" required="required">
+	                                               </div>
+	                                           </div>
+	                                           <div class="col-sm-12 mb-30">
+	                                               <div class="blog__details-left-contact-form-item">
+	                                                   <i class="fal fa-globe"></i>
+	                                                   <input type="text" name="subject" placeholder="Subject" required="required">
+	                                               </div>
+	                                           </div>
+	                                           <div class="col-sm-12 mb-30">
+	                                               <div class="blog__details-left-contact-form-item">
+	                                                   <i class="fal fa-pen"></i>
+	                                                   <textarea name="message" placeholder="Type your comments...."></textarea>
+	                                               </div>
+	                                           </div>
+	                                           <div class="col-lg-12">
+	                                               <div class="blog__details-left-contact-form-item">
+	                                                   <button class="theme-btn" type="submit">Post Comment<i class="far fa-angle-double-right"></i></button>
+	                                               </div>
+	                                           </div>
+	                                       </div>
+	                                   </form>
+	                               </div>
+	                           </div>
+	                       <?php else: ?>
+	                           <div class="text-center">
+	                               <h3>Post not found</h3>
+	                               <p>The blog post you're looking for doesn't exist or has been removed.</p>
+	                               <a href="blog-grid.html" class="theme-btn">Back to Blog<i class="far fa-angle-double-right"></i></a>
+	                           </div>
+	                       <?php endif; ?>
+	                   </div>
+	               </div>
+                <div class="col-xl-4 col-lg-4">
+					<div class="all__sidebar-item-search ml-25 xl-ml-0 mb-40">
+						<form action="#">
+							<input type="text" placeholder="Search.....">
+							<button type="submit"><i class="fal fa-search"></i></button>
+						</form>
+					</div>
+                    <div class="all__sidebar ml-25 xl-ml-0">
+                        <div class="all__sidebar-item">
+                            <h5>Top Category</h5>
+                            <div class="all__sidebar-item-category">
+                                <ul>
+                                    <?php if (!empty($categories)): ?>
+                                        <?php foreach ($categories as $category): ?>
+                                            <li><a href="blog-standard.php?category=<?php echo urlencode($category['name']); ?>"><i class="far fa-angle-double-right"></i><?php echo htmlspecialchars($category['name']); ?><span>(<?php echo $category['post_count']; ?>)</span></a></li>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <li><a href="#"><i class="far fa-angle-double-right"></i>No categories<span>(0)</span></a></li>
+                                    <?php endif; ?>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="all__sidebar-item mt-40">
+                            <h5>Recent Post</h5>
+                            <div class="all__sidebar-item-post">
+                                <?php if (!empty($recent_posts)): ?>
+                                    <?php foreach ($recent_posts as $recent_post): ?>
+                                        <div class="all__sidebar-item-post-item">
+                                            <div class="all__sidebar-item-post-item-image">
+                                                <a href="blog-details.php?id=<?php echo $recent_post['id']; ?>">
+                                                    <?php if (!empty($recent_post['featured_image'])): ?>
+                                                        <img src="<?php echo htmlspecialchars($recent_post['featured_image']); ?>" alt="<?php echo htmlspecialchars($recent_post['title']); ?>">
+                                                    <?php else: ?>
+                                                        <img src="assets/img/blog/post-<?php echo (($recent_post['id'] % 3) + 1); ?>.jpg" alt="<?php echo htmlspecialchars($recent_post['title']); ?>">
+                                                    <?php endif; ?>
+                                                </a>
+                                            </div>
+                                            <div class="all__sidebar-item-post-item-content">
+                                                <span><i class="fal fa-calendar-alt"></i><?php echo date('d M, Y', strtotime($recent_post['created_at'])); ?></span>
+                                                <h6><a href="blog-details.php?id=<?php echo $recent_post['id']; ?>"><?php echo htmlspecialchars(substr($recent_post['title'], 0, 30)) . (strlen($recent_post['title']) > 30 ? '...' : ''); ?></a></h6>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="text-center">
+                                        <p>No recent posts</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="all__sidebar-item mt-40">
+                            <h5>Tags</h5>
+                            <div class="all__sidebar-item-tag">
+                                <ul>
+                                    <li><a href="blog-standard.php">Design</a></li>
+                                    <li><a href="blog-standard.php">Brochure</a></li>
+                                    <li><a href="blog-standard.php">Product</a></li>
+                                    <li><a href="blog-standard.php">Business</a></li>
+                                    <li><a href="blog-standard.php">Development</a></li>
+                                    <li><a href="blog-standard.php">Marketing</a></li>
+                                    <li><a href="blog-standard.php">Branding</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	<!-- Blog Details End -->
+	<!-- Instagram Area Start -->	
+	<div class="instagram__area mb-100">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-lg-2 col-lg-2 col-sm-4 pl-5 pr-5 lg-mb-10">
+					<div class="instagram__area-item">
+						<img src="assets/img/features/instagram-7.jpg" alt="">
+						<div class="instagram__area-item-icon">
+							<a href="#"><i class="fab fa-instagram"></i></a>
+						</div>
+					</div>					
+				</div>
+				<div class="col-lg-2 col-lg-2 col-sm-4 pl-5 pr-5 sm-mb-10">
+					<div class="instagram__area-item">
+						<img src="assets/img/features/instagram-8.jpg" alt="">
+						<div class="instagram__area-item-icon">
+							<a href="#"><i class="fab fa-instagram"></i></a>
+						</div>
+					</div>					
+				</div>
+				<div class="col-lg-2 col-lg-2 col-sm-4 pl-5 pr-5 sm-mb-10">
+					<div class="instagram__area-item">
+						<img src="assets/img/features/instagram-9.jpg" alt="">
+						<div class="instagram__area-item-icon">
+							<a href="#"><i class="fab fa-instagram"></i></a>
+						</div>
+					</div>					
+				</div>
+				<div class="col-lg-2 col-lg-2 col-sm-4 pl-5 pr-5 sm-mb-10">
+					<div class="instagram__area-item">
+						<img src="assets/img/features/instagram-10.jpg" alt="">
+						<div class="instagram__area-item-icon">
+							<a href="#"><i class="fab fa-instagram"></i></a>
+						</div>
+					</div>					
+				</div>
+				<div class="col-lg-2 col-lg-2 col-sm-4 pl-5 pr-5 sm-mb-10">
+					<div class="instagram__area-item">
+						<img src="assets/img/features/instagram-11.jpg" alt="">
+						<div class="instagram__area-item-icon">
+							<a href="#"><i class="fab fa-instagram"></i></a>
+						</div>
+					</div>					
+				</div>
+				<div class="col-lg-2 col-lg-2 col-sm-4 pl-5 pr-5">
+					<div class="instagram__area-item">
+						<img src="assets/img/features/instagram-12.jpg" alt="">
+						<div class="instagram__area-item-icon">
+							<a href="#"><i class="fab fa-instagram"></i></a>
+						</div>
+					</div>					
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Instagram Area End -->	    
+	<!-- Newsletter Area Start -->
+    <div class="newsletter__area">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-xl-7 col-lg-7 lg-mb-30">
+                    <div class="newsletter__area-left">
+                        <h2>Subscribe Our Newsletter</h2>
+                    </div>
+                </div>
+                <div class="col-xl-5 col-lg-5">
+                    <div class="newsletter__area-right">
+						<form action="#">
+							<input type="text" placeholder="Email Address">
+							<button type="submit"><i class="fal fa-hand-pointer"></i></button>
+						</form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>    
+	<!-- Newsletter Area End -->
+	<!-- Footer Two Start -->	
+	<div class="footer__two">
+		<div class="footer__area-shape">
+			<img src="assets/img/shape/foorer.png" alt="">
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-xl-3 col-lg-3 col-md-4 col-sm-8 sm-mb-30">
+					<div class="footer__two-widget">
+						<div class="footer__two-widget-logo">
+							<a href="index.html"><img src="assets/img/logo.png" alt=""></a>								
+						</div>
+                        <p>Phasellus vitae purus ac urna consequat facilisis a vel leo.</p>
+					</div>
+				</div>
+				<div class="col-xl-3 col-lg-2 col-md-3 col-sm-4 lg-mb-30">
+					<div class="footer__two-widget pl-25 xl-pl-0">
+						<h5>Services</h5>
+                        <div class="footer__two-widget-menu">
+                            <ul>
+                                <li><a href="services-details.html">Trend Haircut</a></li>
+                                <li><a href="services-details.html">Hair Washing</a></li>
+                                <li><a href="services-details.html">Hair Coloring</a></li>
+                                <li><a href="services-details.html">Facial hair Trim</a></li>
+                            </ul>
+                        </div>
+					</div>
+				</div>
+				<div class="col-xl-3 col-lg-4 col-md-5 col-sm-6 sm-mb-30">
+					<div class="footer__two-widget pl-10">
+						<h5>Contact Us</h5>
+						<div class="footer__two-widget-contact">
+							<div class="footer__two-widget-contact-item">
+								<div class="footer__two-widget-contact-item-icon">
+									<i class="fal fa-map-marker-alt"></i>
+								</div>
+								<div class="footer__two-widget-contact-item-content">
+									<h6><a href="#">PV3M+X68 Welshpool United Kingdom</a></h6>
+								</div>
+							</div>
+							<div class="footer__two-widget-contact-item">
+								<div class="footer__two-widget-contact-item-icon">
+									<i class="fal fa-phone-alt"></i>
+								</div>
+								<div class="footer__two-widget-contact-item-content">
+									<h6><a href="tel:+125(895)658568">+125 (895) 658 568</a></h6>
+								</div>
+							</div>
+							<div class="footer__two-widget-contact-item">
+								<div class="footer__two-widget-contact-item-icon">
+									<i class="fal fa-envelope-open-text"></i>
+								</div>
+								<div class="footer__two-widget-contact-item-content">
+									<h6><a href="mailto:info.help@gmail.com">info.help@gmail.com</a></h6>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xl-3 col-lg-3 col-md-5 col-sm-6">
+					<div class="footer__two-widget last">
+						<h5>Follow Us</h5>
+						<div class="footer__two-widget-follow">
+                            <ul>
+								<li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
+								<li><a href="#"><i class="fab fa-twitter"></i></a></li>
+								<li><a href="#"><i class="fab fa-snapchat"></i></a></li>
+								<li><a href="#"><i class="fab fa-pinterest-p"></i></a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="copyright__two">
+			<div class="container">
+				<div class="row align-items-center">
+					<div class="col-xl-12">
+						<div class="copyright__two-center">
+							<p>Copyright © 2022<a href="index.html"> ThemeOri</a> Website by Barbex</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Footer Two End -->	  
+	<!-- Scroll Btn Start -->
+	<div class="scroll-up">
+		<svg class="scroll-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102"><path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" /> </svg>
+	</div>
+	<!-- Scroll Btn End -->
+	<!-- Main JS -->
+	<script src="assets/js/jquery-3.6.0.min.js"></script>
+	<!-- Bootstrap JS -->
+	<script src="assets/js/bootstrap.min.js"></script>
+	<!-- Counter up -->
+	<script src="assets/js/jquery.counterup.min.js"></script>
+	<!-- Popper JS -->
+	<script src="assets/js/popper.min.js"></script>
+	<!-- Magnific JS -->
+	<script src="assets/js/jquery.magnific-popup.min.js"></script>
+	<!-- Swiper JS -->
+	<script src="assets/js/swiper-bundle.min.js"></script>
+	<!-- Waypoints JS -->
+	<script src="assets/js/jquery.waypoints.min.js"></script>
+	<!-- Mean menu -->
+	<script src="assets/js/jquery.meanmenu.min.js"></script>
+	<!-- Custom JS -->
+	<script src="assets/js/custom.js"></script>
+</body>
+
+</html>

@@ -3,7 +3,7 @@ session_start();
 require_once '../config/database.php';
 
 // Check if user is logged in and is admin
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     header("Location: ../login.php");
     exit();
 }
@@ -31,6 +31,16 @@ $query = "SELECT COUNT(*) as total FROM orders";
 $stmt = $db->prepare($query);
 $stmt->execute();
 $stats['orders'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+// Total blog posts
+try {
+    $query = "SELECT COUNT(*) as total FROM blog_posts";
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+    $stats['blog_posts'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
+} catch (Exception $e) {
+    $stats['blog_posts'] = 0; // Default to 0 if table doesn't exist
+}
 
 // Recent orders
 $query = "SELECT o.*, u.name as customer_name FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC LIMIT 5";
@@ -138,6 +148,9 @@ $low_stock = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <a class="nav-link" href="users.php">
                         <i class="fas fa-users"></i> Usuarios
                     </a>
+                    <a class="nav-link" href="blog.php">
+                        <i class="fas fa-blog"></i> Blog
+                    </a>
                     <a class="nav-link" href="settings.php">
                         <i class="fas fa-cog"></i> Configuración
                     </a>
@@ -168,8 +181,8 @@ $low_stock = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                     <div class="col-md-3">
                         <div class="stat-card">
-                            <h3>$<?php echo number_format($stats['orders'] * 45.50, 2); ?></h3>
-                            <p><i class="fas fa-dollar-sign"></i> Ingresos Estimados</p>
+                            <h3><?php echo $stats['blog_posts']; ?></h3>
+                            <p><i class="fas fa-blog"></i> Artículos del Blog</p>
                         </div>
                     </div>
                 </div>
@@ -270,6 +283,13 @@ $low_stock = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <div class="col-md-3">
                                     <a href="users.php" class="btn btn-info btn-lg w-100">
                                         <i class="fas fa-users"></i><br>Gestionar Usuarios
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-3">
+                                    <a href="blog.php" class="btn btn-secondary btn-lg w-100">
+                                        <i class="fas fa-blog"></i><br>Gestionar Blog
                                     </a>
                                 </div>
                             </div>

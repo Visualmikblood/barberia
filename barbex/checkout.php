@@ -270,9 +270,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 								</li>
 								<li class="menu-item-has-children"><a href="#">Blog</a>
 									<ul class="sub-menu">
-										<li><a href="blog-grid.html">Blog Grid</a></li>
-										<li><a href="blog-standard.html">Blog Standard</a></li>
-										<li><a href="blog-details.html">Blog Details</a></li>
+										<li><a href="blog-grid.php">Blog Grid</a></li>
+										<li><a href="blog-standard.php">Blog Standard</a></li>
+										<li><a href="blog-details.php">Blog Details</a></li>
 									</ul>
 								</li>
 								<li><a href="contact.html">Contact</a></li>

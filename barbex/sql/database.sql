@@ -141,6 +141,134 @@ INSERT INTO categories (name, description, status) VALUES
 -- Actualizar productos existentes para asignar categorías
 UPDATE products SET category_id = (SELECT id FROM categories WHERE name = category LIMIT 1) WHERE category IS NOT NULL;
 
+-- Tabla de artículos del blog
+CREATE TABLE blog_posts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    content TEXT NOT NULL,
+    excerpt TEXT,
+    featured_image VARCHAR(255),
+    author_id INT,
+    category VARCHAR(100),
+    tags VARCHAR(255),
+    status ENUM('draft', 'published', 'archived') DEFAULT 'draft',
+    published_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Tabla de categorías del blog
+CREATE TABLE blog_categories (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Tabla de comentarios del blog
+CREATE TABLE blog_comments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    post_id INT NOT NULL,
+    author_name VARCHAR(255) NOT NULL,
+    author_email VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    status ENUM('pending', 'approved', 'spam', 'trash') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Insertar categorías de blog de ejemplo
+INSERT INTO blog_categories (name, slug, description, status) VALUES
+('Tips de Belleza', 'tips-belleza', 'Consejos y tips para el cuidado personal', 'active'),
+('Tendencias', 'tendencias', 'Últimas tendencias en barbería y belleza', 'active'),
+('Productos', 'productos', 'Reseñas y recomendaciones de productos', 'active'),
+('Consejos Profesionales', 'consejos-profesionales', 'Consejos de expertos en barbería', 'active');
+
+-- Insertar artículos de blog de ejemplo
+INSERT INTO blog_posts (title, slug, content, excerpt, featured_image, author_id, category, tags, status, published_at) VALUES
+('Los Mejores Consejos para el Cuidado de la Barba', 'mejores-consejos-cuidado-barba',
+'<h2>Introducción</h2>
+<p>La barba es una parte fundamental de la imagen masculina. Un buen cuidado de la barba no solo mejora la apariencia, sino que también mantiene la salud del cabello y la piel.</p>
+
+<h2>Productos Esenciales</h2>
+<p>Para mantener una barba saludable necesitas:</p>
+<ul>
+<li>Aceite para barba</li>
+<li>Champú específico para barba</li>
+<li>Peine de barba</li>
+<li>Tijeras de precisión</li>
+</ul>
+
+<h2>Rutina Diaria</h2>
+<p>Sigue estos pasos diariamente:</p>
+<ol>
+<li>Lava tu barba con champú suave</li>
+<li>Aplica aceite hidratante</li>
+<li>Peina en la dirección del crecimiento</li>
+<li>Recorta cuando sea necesario</li>
+</ol>
+
+<h2>Conclusión</h2>
+<p>Con estos consejos simples, mantendrás tu barba siempre impecable y saludable.</p>',
+'Descubre los mejores consejos para mantener tu barba saludable y bien cuidada.',
+'assets/img/blog/blog-1.jpg',
+(SELECT id FROM users WHERE role = 'admin' LIMIT 1),
+'Tips de Belleza',
+'cuidado-barba,consejos,hombres',
+'published',
+NOW()),
+
+('Tendencias en Cortes de Cabello 2024', 'tendencias-cortes-cabello-2024',
+'<h2>Las Tendencias Más Populares</h2>
+<p>Este año las tendencias en cortes de cabello masculinos se inclinan hacia estilos versátiles y fáciles de mantener.</p>
+
+<h2>Corte Clásico Moderno</h2>
+<p>El corte clásico con toques modernos sigue siendo el favorito. Combina la elegancia tradicional con detalles contemporáneos.</p>
+
+<h2>Cortes Texturizados</h2>
+<p>Los cortes con textura están ganando popularidad. Añaden movimiento y dimensión al cabello.</p>
+
+<h2>Mantenimiento</h2>
+<p>Para mantener estos cortes, recomendamos visitas regulares cada 3-4 semanas.</p>',
+'Conoce las últimas tendencias en cortes de cabello para hombres este 2024.',
+'assets/img/blog/blog-2.jpg',
+(SELECT id FROM users WHERE role = 'admin' LIMIT 1),
+'Tendencias',
+'tendencias,cortes,cabello',
+'published',
+NOW()),
+
+('Cómo Elegir el Aceite para Barba Perfecto', 'como-elegir-aceite-barba-perfecto',
+'<h2>Tipos de Aceites</h2>
+<p>Existen diferentes tipos de aceites para barba, cada uno con beneficios específicos.</p>
+
+<h2>Aceites Naturales</h2>
+<p>Los aceites naturales como el de jojoba, argán y ricino son excelentes para hidratar la barba y la piel.</p>
+
+<h2>Aceites Esenciales</h2>
+<p>Los aceites esenciales añaden aroma y propiedades terapéuticas adicionales.</p>
+
+<h2>Factores a Considerar</h2>
+<p>Al elegir un aceite para barba, considera:</p>
+<ul>
+<li>Tipo de piel</li>
+<li>Longitud de la barba</li>
+<li>Preferencias de aroma</li>
+<li>Presupuesto</li>
+</ul>',
+'Guía completa para elegir el aceite para barba perfecto según tus necesidades.',
+'assets/img/blog/blog-3.jpg',
+(SELECT id FROM users WHERE role = 'admin' LIMIT 1),
+'Productos',
+'aceite-barba,productos,reseñas',
+'published',
+NOW());
+
 -- Crear usuario admin de ejemplo
 INSERT INTO users (name, email, password, role) VALUES
 ('Admin', 'admin@barbex.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
