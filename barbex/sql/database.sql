@@ -114,6 +114,32 @@ UPDATE products SET
     featured = 0
 WHERE short_description IS NULL;
 
+-- Tabla de categorías
+CREATE TABLE categories (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    status ENUM('active', 'inactive') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Agregar columna category_id a la tabla products
+ALTER TABLE products ADD COLUMN category_id INT NULL AFTER category;
+ALTER TABLE products ADD CONSTRAINT fk_products_category_id FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL;
+
+-- Insertar categorías de ejemplo
+INSERT INTO categories (name, description, status) VALUES
+('Face Wash', 'Productos para limpieza facial', 'active'),
+('Face Cream', 'Cremas y tratamientos faciales', 'active'),
+('Hair Care', 'Productos para cuidado del cabello', 'active'),
+('Beard Care', 'Productos para barba y bigote', 'active'),
+('Hair Styling', 'Productos para peinado y estilo', 'active'),
+('Face Care', 'Cuidado general del rostro', 'active');
+
+-- Actualizar productos existentes para asignar categorías
+UPDATE products SET category_id = (SELECT id FROM categories WHERE name = category LIMIT 1) WHERE category IS NOT NULL;
+
 -- Crear usuario admin de ejemplo
 INSERT INTO users (name, email, password, role) VALUES
 ('Admin', 'admin@barbex.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
