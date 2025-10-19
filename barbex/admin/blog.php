@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Handle file upload
                     $featured_image = '';
                     if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
-                        $upload_dir = 'assets/img/blog/';
+                        $upload_dir = '../assets/img/blog/';
                         if (!is_dir($upload_dir)) {
                             mkdir($upload_dir, 0755, true);
                         }

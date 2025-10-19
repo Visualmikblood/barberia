@@ -180,7 +180,7 @@ try {
 							<div class="blog__area-item-image">
 								<a href="blog-details.php?id=<?php echo $post['id']; ?>">
 									<?php if (!empty($post['featured_image'])): ?>
-										<img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>">
+										<img src="<?php echo htmlspecialchars($post['featured_image']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" onerror="this.src='assets/img/blog/blog-<?php echo (($index % 12) + 1); ?>.jpg'">
 									<?php else: ?>
 										<img src="assets/img/blog/blog-<?php echo (($index % 12) + 1); ?>.jpg" alt="<?php echo htmlspecialchars($post['title']); ?>">
 									<?php endif; ?>
