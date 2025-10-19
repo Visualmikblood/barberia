@@ -13,7 +13,7 @@ class ShoppingCart {
         console.log('Loading final cart...');
         this.loadCart();
         this.updateCartCount();
-        // this.loadFromDatabase(); // Cargar datos de BD al inicializar - comentado para evitar conflictos
+        this.loadFromDatabase(); // Cargar datos de BD al inicializar
         console.log('Final cart ready with', this.cart.length, 'items');
     }
 
@@ -128,7 +128,12 @@ class ShoppingCart {
         .then(response => response.json())
         .then(data => {
             console.log('Database cart data:', data);
-            if (data.success && data.data && data.data.items) {
+            // Siempre limpiar el carrito local primero
+            this.cart = [];
+            this.saveCart();
+            this.updateCartCount();
+
+            if (data.success && data.data && data.data.items && data.data.items.length > 0) {
                 // Sincronizar localStorage con datos de BD
                 this.cart = data.data.items.map(item => ({
                     id: item.product_id,
@@ -140,10 +145,16 @@ class ShoppingCart {
                 this.saveCart();
                 this.updateCartCount();
                 console.log('✅ Cart loaded from database:', this.cart.length, 'items');
+            } else {
+                console.log('No cart data in database, local cart remains empty');
             }
         })
         .catch(error => {
             console.error('❌ Error loading cart from database:', error);
+            // En caso de error, limpiar el carrito local
+            this.cart = [];
+            this.saveCart();
+            this.updateCartCount();
         });
     }
 

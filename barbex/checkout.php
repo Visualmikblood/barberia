@@ -124,7 +124,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // Clear cart AFTER processing items
-            $cart->clearCart();
+            error_log("Clearing cart after order processing...");
+            $clearResult = $cart->clearCart();
+            error_log("Cart clear result: " . json_encode($clearResult));
 
             // Redirect to success page
             header("Location: checkout-success.php?order_id=$order_id");
@@ -657,6 +659,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
+	<script src="assets/js/cart_final.js"></script>
 
 	<script>
 		function showBankTransferInfo() {

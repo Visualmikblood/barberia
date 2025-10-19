@@ -321,7 +321,7 @@
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
-	<!-- Cart JavaScript - Consistent with product-page.php -->
+	<script src="assets/js/cart_final.js"></script>
 	<script>
 		console.log('=== CART PAGE LOADED ===');
 

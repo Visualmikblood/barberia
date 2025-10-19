@@ -1,4 +1,5 @@
 <?php
+session_start();
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -143,8 +144,10 @@ try {
         }
     }
 
-    // Limpiar carrito
-    $cart->clearCart();
+    // Limpiar carrito solo si no se proporcionó cart data (es decir, usando carrito de sesión)
+    if (!isset($data['cart'])) {
+        $cart->clearCart();
+    }
 
     // Confirmar transacción
     $db->commit();

@@ -510,8 +510,7 @@ $related_products = $related_stmt->fetchAll();
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
-	<!-- Cart JS -->
-	<script src="assets/js/cart.js"></script>
+	<script src="assets/js/cart_final.js"></script>
 </body>
 
 </html>

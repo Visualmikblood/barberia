@@ -1,10 +1,14 @@
 <?php
 session_start();
 require_once 'config/database.php';
+require_once 'classes/Cart.php';
 
 // Initialize database connection
 $database = new Database();
 $db = $database->getConnection();
+
+// Initialize cart to clear it after showing success page
+$cart = new Cart($db);
 
 $order = null;
 if (isset($_GET['order_id'])) {
@@ -26,6 +30,12 @@ if (isset($_GET['order_id'])) {
     error_log("Order ID: $order_id");
     error_log("Order items count: " . count($order_items));
     error_log("Order items: " . json_encode($order_items));
+
+    // Clear cart after successful order (only if it wasn't cleared in API)
+    if ($order && !empty($order_items)) {
+        error_log("Clearing cart on success page for session: " . session_id());
+        $cart->clearCart();
+    }
 }
 ?>
 <!DOCTYPE html>

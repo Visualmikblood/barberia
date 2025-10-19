@@ -163,11 +163,16 @@ class Cart {
     }
 
     public function clearCart() {
+        error_log("ClearCart called for session: " . $this->sessionId);
         $query = "DELETE FROM cart_items WHERE session_id = :session_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(":session_id", $this->sessionId);
 
-        if ($stmt->execute()) {
+        $result = $stmt->execute();
+        error_log("ClearCart query executed: " . ($result ? 'success' : 'failed'));
+        error_log("Rows affected: " . $stmt->rowCount());
+
+        if ($result) {
             $this->updateSessionTimestamp();
             return ['success' => true, 'message' => 'Carrito vaciado'];
         }

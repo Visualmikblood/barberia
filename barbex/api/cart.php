@@ -48,23 +48,34 @@ switch ($method) {
 }
 
 function handleGet($cart, $action) {
+    // Debug: Log session info
+    error_log("API GET - Session ID: " . session_id());
+    error_log("API GET - Cart session ID: " . ($_SESSION['cart_session_id'] ?? 'not set'));
+    error_log("API GET - Action: " . $action);
+
     switch ($action) {
         case 'get':
+            $cartData = $cart->getCartData();
+            error_log("API GET - Cart data: " . json_encode($cartData));
             echo json_encode([
                 'success' => true,
-                'data' => $cart->getCartData()
+                'data' => $cartData
             ]);
             break;
         case 'count':
+            $count = $cart->getItemCount();
+            error_log("API GET - Cart count: " . $count);
             echo json_encode([
                 'success' => true,
-                'count' => $cart->getItemCount()
+                'count' => $count
             ]);
             break;
         default:
+            $cartData = $cart->getCartData();
+            error_log("API GET - Default cart data: " . json_encode($cartData));
             echo json_encode([
                 'success' => true,
-                'data' => $cart->getCartData()
+                'data' => $cartData
             ]);
     }
 }
