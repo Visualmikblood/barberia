@@ -34,6 +34,7 @@ $cart_total = $cart->getTotal();
 // Handle checkout form submission
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name = trim($_POST['last_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
@@ -41,80 +42,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = trim($_POST['address'] ?? '');
     $city = trim($_POST['city'] ?? '');
     $postcode = trim($_POST['postcode'] ?? '');
+    $payment_method = trim($_POST['payment_method'] ?? 'cash_on_delivery');
+    $paypal_email = trim($_POST['paypal_email'] ?? '');
+    $card_number = trim($_POST['card_number'] ?? '');
+    $card_expiry = trim($_POST['card_expiry'] ?? '');
+    $card_cvv = trim($_POST['card_cvv'] ?? '');
+    $card_holder = trim($_POST['card_holder'] ?? '');
     $notes = trim($_POST['notes'] ?? '');
+
+    // Validate PayPal fields if PayPal is selected
+    if ($payment_method === 'paypal') {
+        if (empty($paypal_email) || !filter_var($paypal_email, FILTER_VALIDATE_EMAIL)) {
+            $message = '<div class="alert alert-danger">Please enter a valid PayPal email address</div>';
+        }
+    }
+
+    // Validate credit card fields if credit card is selected
+    if ($payment_method === 'credit_card') {
+        if (empty($card_number) || empty($card_expiry) || empty($card_cvv) || empty($card_holder)) {
+            $message = '<div class="alert alert-danger">Please fill in all credit card information</div>';
+        } elseif (strlen(preg_replace('/\s+/', '', $card_number)) < 13) {
+            $message = '<div class="alert alert-danger">Please enter a valid card number</div>';
+        } elseif (!preg_match('/^(0[1-9]|1[0-2])\/\d{2}$/', $card_expiry)) {
+            $message = '<div class="alert alert-danger">Please enter a valid expiry date (MM/YY)</div>';
+        } elseif (strlen($card_cvv) < 3) {
+            $message = '<div class="alert alert-danger">Please enter a valid CVV</div>';
+        }
+    }
 
     if (empty($first_name) || empty($last_name) || empty($email) || empty($phone) || empty($address)) {
         $message = '<div class="alert alert-danger">Please fill in all required fields</div>';
-    } else {
-        // Generate order number
-        $order_number = 'ORD-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+    }
 
-        // Create order
-        $order_data = [
-            'user_id' => $_SESSION['user_id'] ?? null,
-            'session_id' => session_id(),
-            'order_number' => $order_number,
-            'customer_name' => $first_name . ' ' . $last_name,
-            'customer_email' => $email,
-            'customer_phone' => $phone,
-            'customer_address' => $address,
-            'customer_city' => $city,
-            'customer_postcode' => $postcode,
-            'customer_country' => 'Spain', // Default country
-            'subtotal' => $cart_total,
-            'tax' => 0,
-            'shipping' => 0,
-            'total' => $cart_total,
-            'payment_method' => 'cash_on_delivery',
-            'payment_status' => 'pending',
-            'order_status' => 'pending',
-            'notes' => $notes
-        ];
+    // Process the order
+    $order_number = 'ORD-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
 
-        $query = "INSERT INTO orders (user_id, session_id, order_number, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_postcode, customer_country, subtotal, tax, shipping, total, payment_method, payment_status, order_status, notes, created_at) VALUES (:user_id, :session_id, :order_number, :customer_name, :customer_email, :customer_phone, :customer_address, :customer_city, :customer_postcode, :customer_country, :subtotal, :tax, :shipping, :total, :payment_method, :payment_status, :order_status, :notes, NOW())";
-        $stmt = $db->prepare($query);
+    $order_data = [
+        'user_id' => $_SESSION['user_id'] ?? null,
+        'session_id' => $_SESSION['cart_session_id'] ?? session_id(),
+        'order_number' => $order_number,
+        'customer_name' => $first_name . ' ' . $last_name,
+        'customer_email' => $email,
+        'customer_phone' => $phone,
+        'customer_address' => $address,
+        'customer_city' => $city,
+        'customer_postcode' => $postcode,
+        'customer_country' => 'Spain', // Default country
+        'subtotal' => $cart_total,
+        'tax' => 0,
+        'shipping' => 0,
+        'total' => $cart_total,
+        'payment_method' => $payment_method,
+        'payment_status' => ($payment_method === 'cash_on_delivery') ? 'pending' : 'paid',
+        'order_status' => 'pending',
+        'notes' => $notes
+    ];
 
-        try {
-            foreach ($order_data as $key => $value) {
-                $stmt->bindValue(":$key", $value);
+    $query = "INSERT INTO orders (user_id, session_id, order_number, customer_name, customer_email, customer_phone, customer_address, customer_city, customer_postcode, customer_country, subtotal, tax, shipping, total, payment_method, payment_status, order_status, notes, created_at) VALUES (:user_id, :session_id, :order_number, :customer_name, :customer_email, :customer_phone, :customer_address, :customer_city, :customer_postcode, :customer_country, :subtotal, :tax, :shipping, :total, :payment_method, :payment_status, :order_status, :notes, NOW())";
+    $stmt = $db->prepare($query);
+
+    try {
+        foreach ($order_data as $key => $value) {
+            $stmt->bindValue(":$key", $value);
+        }
+
+        if ($stmt->execute()) {
+            $order_id = $db->lastInsertId();
+
+            // Insert order items
+            foreach ($cart_items as $item) {
+                $item_query = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, total) VALUES (:order_id, :product_id, :product_name, :product_price, :quantity, :total)";
+                $item_stmt = $db->prepare($item_query);
+                $item_stmt->execute([
+                    'order_id' => $order_id,
+                    'product_id' => $item['product_id'],
+                    'product_name' => $item['name'],
+                    'product_price' => $item['price'],
+                    'quantity' => $item['quantity'],
+                    'total' => $item['price'] * $item['quantity']
+                ]);
             }
 
-            if ($stmt->execute()) {
-                $order_id = $db->lastInsertId();
+            // Clear cart AFTER processing items
+            $cart->clearCart();
 
-                // Debug: Check cart items
-                error_log("Order ID: $order_id");
-                error_log("Cart items: " . json_encode($cart_items));
-
-                // Insert order items
-                foreach ($cart_items as $item) {
-                    error_log("Processing item: " . json_encode($item));
-                    $item_query = "INSERT INTO order_items (order_id, product_id, product_name, product_price, quantity, total) VALUES (:order_id, :product_id, :product_name, :product_price, :quantity, :total)";
-                    $item_stmt = $db->prepare($item_query);
-                    $result = $item_stmt->execute([
-                        'order_id' => $order_id,
-                        'product_id' => $item['product_id'],
-                        'product_name' => $item['name'],
-                        'product_price' => $item['price'],
-                        'quantity' => $item['quantity'],
-                        'total' => $item['price'] * $item['quantity']
-                    ]);
-                    error_log("Item insert result: " . ($result ? 'success' : 'failed'));
-                }
-
-                // Clear cart AFTER processing items
-                $cart->clearCart();
-
-                // Redirect to success page
-                header("Location: checkout-success.php?order_id=$order_id");
-                exit;
-            } else {
-                $message = '<div class="alert alert-danger">Error processing order. Please try again.</div>';
-            }
-        } catch (Exception $e) {
-            error_log("Database error: " . $e->getMessage());
+            // Redirect to success page
+            header("Location: checkout-success.php?order_id=$order_id");
+            exit;
+        } else {
             $message = '<div class="alert alert-danger">Error processing order. Please try again.</div>';
         }
+    } catch (Exception $e) {
+        $message = '<div class="alert alert-danger">Error processing order. Please try again.</div>';
     }
 }
 ?>
@@ -147,6 +166,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<link rel="stylesheet" href="assets/css/meanmenu.min.css">
 	<!-- Custom CSS -->
 	<link rel="stylesheet" href="assets/css/style.css">
+	<style>
+		.payment-methods {
+			display: flex;
+			flex-direction: column;
+			gap: 15px;
+		}
+		.payment-method-option {
+			border: 2px solid #e9ecef;
+			border-radius: 8px;
+			padding: 15px;
+			transition: all 0.3s ease;
+		}
+		.payment-method-option:hover {
+			border-color: #667eea;
+		}
+		.payment-method-option input[type="radio"] {
+			display: none;
+		}
+		.payment-method-option label {
+			display: flex;
+			align-items: center;
+			cursor: pointer;
+			margin: 0;
+		}
+		.payment-method-option label i {
+			font-size: 24px;
+			color: #667eea;
+			margin-right: 15px;
+			min-width: 30px;
+		}
+		.payment-method-option label strong {
+			display: block;
+			color: #333;
+			margin-bottom: 5px;
+		}
+		.payment-method-option label p {
+			margin: 0;
+			color: #6c757d;
+			font-size: 14px;
+		}
+		.payment-method-option input[type="radio"]:checked + label {
+			color: #667eea;
+		}
+		.payment-method-option input[type="radio"]:checked ~ label i {
+			color: #28a745;
+		}
+		.payment-method-option input[type="radio"]:checked ~ label {
+			border-color: #28a745;
+			background-color: #f8fff9;
+		}
+	</style>
 </head>
 
 <body>
@@ -309,6 +379,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     				<div class="checkout__area-left-form-list">
     					<label>Postcode / Zip<span> *</span></label>
     					<input type="text" name="postcode" placeholder="Postcode / Zip" required>
+    				</div>
+    			</div>
+    			<div class="col-md-12 pt-60 pb-60">
+    				<h3>Payment Method</h3>
+    			</div>
+    			<div class="col-md-12 mb-30">
+    				<div class="payment-methods">
+    					<div class="payment-method-option">
+    						<input type="radio" id="cash_on_delivery" name="payment_method" value="cash_on_delivery" checked>
+    						<label for="cash_on_delivery">
+    							<i class="fas fa-money-bill-wave"></i>
+    							<strong>Cash on Delivery</strong>
+    							<p>Pay when you receive your order</p>
+    						</label>
+    					</div>
+    					<div class="payment-method-option" onclick="showBankTransferInfo()">
+    						<input type="radio" id="bank_transfer" name="payment_method" value="bank_transfer">
+    						<label for="bank_transfer">
+    							<i class="fas fa-university"></i>
+    							<strong>Bank Transfer</strong>
+    							<p>Direct bank transfer to our account</p>
+    						</label>
+    					</div>
+    					<div class="payment-method-option" onclick="showPayPalForm()">
+    						<input type="radio" id="paypal" name="payment_method" value="paypal">
+    						<label for="paypal">
+    							<i class="fab fa-paypal"></i>
+    							<strong>PayPal</strong>
+    							<p>Pay securely with your PayPal account</p>
+    						</label>
+    					</div>
+    					<div class="payment-method-option" onclick="showCreditCardForm()">
+    						<input type="radio" id="credit_card" name="payment_method" value="credit_card">
+    						<label for="credit_card">
+    							<i class="fas fa-credit-card"></i>
+    							<strong>Credit Card</strong>
+    							<p>Pay securely with your credit card</p>
+    						</label>
+    					</div>
+    				</div>
+
+    				<!-- Bank Transfer Info (hidden by default) -->
+    				<div id="bank-transfer-info" class="payment-info-form" style="display: none; margin-top: 20px; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; background: #f8f9fa;">
+    					<h5><i class="fas fa-university"></i> Bank Transfer Information</h5>
+    					<div class="alert alert-info">
+    						<i class="fas fa-info-circle"></i>
+    						<strong>Bank Transfer Instructions:</strong>
+    						<ul class="mb-0 mt-2">
+    							<li>Bank Name: Banco Santander</li>
+    							<li>Account Holder: BarbeX Hair Salon</li>
+    							<li>IBAN: ES21 0049 1500 0512 3456 7890</li>
+    							<li>BIC/SWIFT: BSCHESMM</li>
+    							<li>Reference: Your Order Number</li>
+    						</ul>
+    						<small class="mt-2 d-block">Please include your order number in the transfer reference. Your order will be processed once the payment is confirmed (usually 1-2 business days).</small>
+    					</div>
+    				</div>
+
+    				<!-- PayPal Form (hidden by default) -->
+    				<div id="paypal-form" class="payment-info-form" style="display: none; margin-top: 20px; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; background: #f8f9fa;">
+    					<h5><i class="fab fa-paypal"></i> PayPal Payment</h5>
+    					<div class="row">
+    						<div class="col-md-12 mb-20">
+    							<label>PayPal Email *</label>
+    							<input type="email" name="paypal_email" class="form-control" placeholder="your-email@example.com">
+    						</div>
+    					</div>
+    					<div class="alert alert-info">
+    						<i class="fas fa-info-circle"></i>
+    						<small>You will be redirected to PayPal to complete your payment securely. PayPal accepts Visa, MasterCard, American Express, and PayPal balance.</small>
+    					</div>
+    					<div class="text-center">
+    						<img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/PP_logo_h_100x26.png" alt="PayPal" style="height: 26px;">
+    					</div>
+    				</div>
+
+    				<!-- Credit Card Form (hidden by default) -->
+    				<div id="credit-card-form" class="credit-card-form" style="display: none; margin-top: 20px; padding: 20px; border: 1px solid #e9ecef; border-radius: 8px; background: #f8f9fa;">
+    					<h5><i class="fas fa-credit-card"></i> Credit Card Information</h5>
+    					<div class="row">
+    						<div class="col-md-12 mb-20">
+    							<label>Card Number *</label>
+    							<input type="text" name="card_number" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+    						</div>
+    						<div class="col-md-6 mb-20">
+    							<label>Expiry Date *</label>
+    							<input type="text" name="card_expiry" class="form-control" placeholder="MM/YY" maxlength="5">
+    						</div>
+    						<div class="col-md-6 mb-20">
+    							<label>CVV *</label>
+    							<input type="text" name="card_cvv" class="form-control" placeholder="123" maxlength="4">
+    						</div>
+    						<div class="col-md-12 mb-20">
+    							<label>Cardholder Name *</label>
+    							<input type="text" name="card_holder" class="form-control" placeholder="John Doe">
+    						</div>
+    					</div>
+    					<div class="alert alert-info">
+    						<i class="fas fa-info-circle"></i>
+    						<small>Your payment information is encrypted and secure. We accept Visa, MasterCard, and American Express.</small>
+    					</div>
     				</div>
     			</div>
     			<div class="col-md-12 pt-60 pb-60">
@@ -486,6 +657,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	<script src="assets/js/jquery.meanmenu.min.js"></script>
 	<!-- Custom JS -->
 	<script src="assets/js/custom.js"></script>
+
+	<script>
+		function showBankTransferInfo() {
+			document.getElementById('bank_transfer').checked = true;
+			document.getElementById('bank-transfer-info').style.display = 'block';
+			document.getElementById('paypal-form').style.display = 'none';
+			document.getElementById('credit-card-form').style.display = 'none';
+		}
+
+		function showPayPalForm() {
+			document.getElementById('paypal').checked = true;
+			document.getElementById('paypal-form').style.display = 'block';
+			document.getElementById('bank-transfer-info').style.display = 'none';
+			document.getElementById('credit-card-form').style.display = 'none';
+		}
+
+		function showCreditCardForm() {
+			document.getElementById('credit_card').checked = true;
+			document.getElementById('credit-card-form').style.display = 'block';
+			document.getElementById('bank-transfer-info').style.display = 'none';
+			document.getElementById('paypal-form').style.display = 'none';
+		}
+
+		// Hide all forms when other payment methods are selected
+		document.addEventListener('DOMContentLoaded', function() {
+			document.getElementById('cash_on_delivery').addEventListener('change', function() {
+				document.getElementById('bank-transfer-info').style.display = 'none';
+				document.getElementById('paypal-form').style.display = 'none';
+				document.getElementById('credit-card-form').style.display = 'none';
+			});
+			document.getElementById('bank_transfer').addEventListener('change', function() {
+				document.getElementById('bank-transfer-info').style.display = 'block';
+				document.getElementById('paypal-form').style.display = 'none';
+				document.getElementById('credit-card-form').style.display = 'none';
+			});
+			document.getElementById('paypal').addEventListener('change', function() {
+				document.getElementById('paypal-form').style.display = 'block';
+				document.getElementById('bank-transfer-info').style.display = 'none';
+				document.getElementById('credit-card-form').style.display = 'none';
+			});
+			document.getElementById('credit_card').addEventListener('change', function() {
+				document.getElementById('credit-card-form').style.display = 'block';
+				document.getElementById('bank-transfer-info').style.display = 'none';
+				document.getElementById('paypal-form').style.display = 'none';
+			});
+		});
+
+		// Format card number input
+		document.addEventListener('DOMContentLoaded', function() {
+			const cardNumberInput = document.querySelector('input[name="card_number"]');
+			const cardExpiryInput = document.querySelector('input[name="card_expiry"]');
+
+			if (cardNumberInput) {
+				cardNumberInput.addEventListener('input', function(e) {
+					let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+					let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+					e.target.value = formattedValue;
+				});
+			}
+
+			if (cardExpiryInput) {
+				cardExpiryInput.addEventListener('input', function(e) {
+					let value = e.target.value.replace(/\D/g, '');
+					if (value.length >= 2) {
+						value = value.substring(0, 2) + '/' + value.substring(2, 4);
+					}
+					e.target.value = value;
+				});
+			}
+		});
+	</script>
 
 </body>
 
