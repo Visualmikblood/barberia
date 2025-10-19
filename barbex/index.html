@@ -1,5 +1,6 @@
+<?php session_start(); ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
 	<!-- Start Meta -->
@@ -114,7 +115,11 @@
 								</a>
 							</div>
 							<div class="header__area-menubar-right-box-btn">
-								<a href="login.php" class="theme-banner-btn">Login<i class="far fa-angle-double-right"></i></a>
+								<?php if (isset($_SESSION['user_id'])): ?>
+									<a href="my-account.php" class="theme-banner-btn">Mi Cuenta<i class="far fa-angle-double-right"></i></a>
+								<?php else: ?>
+									<a href="login.php" class="theme-banner-btn">Login<i class="far fa-angle-double-right"></i></a>
+								<?php endif; ?>
 							</div>
 						</div>
 					</div>
