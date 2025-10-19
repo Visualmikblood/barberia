@@ -220,7 +220,7 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
                             <ul id="mobilemenu">
                                 <li class="menu-item-has-children"><a href="#">Home</a>
                                     <ul class="sub-menu">
-                                        <li><a href="index.php">Home 01</a></li>
+                                        <li><a href="index.html">Home 01</a></li>
                                         <li><a href="index-2.html">Home 02</a></li>
                                         <li><a href="index-3.html">Home 03</a></li>
                                     </ul>
@@ -279,7 +279,7 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <h1>Mi Cuenta</h1>
                         <div class="page__banner-title-menu">
                             <ul>
-                                <li><a href="index.php">Inicio</a></li>
+                                <li><a href="index.html">Inicio</a></li>
                                 <li><span>_</span>Mi Cuenta</li>
                             </ul>
                         </div>
@@ -514,7 +514,7 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="row">
                 <div class="col-xl-12">
                     <div class="copyright__two-center">
-                        <p>Copyright © 2022<a href="index.php"> ThemeOri</a> Website by Barbex</p>
+                        <p>Copyright © 2022<a href="index.html"> ThemeOri</a> Website by Barbex</p>
                     </div>
                 </div>
             </div>
