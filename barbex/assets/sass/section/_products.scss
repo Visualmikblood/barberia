@@ -13,6 +13,15 @@ Products Area
         &-image {
             position: relative;
             z-index: 1;
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: all 0.4s ease-out 0s;
+            }
             &::after {
                 position: absolute;
                 content: '';
@@ -24,7 +33,7 @@ Products Area
                 opacity: 0;
                 z-index: 0;
                 transition: all 0.4s ease-out 0s;
-            } 
+            }
             &-social {
                 position: absolute;
                 left: 0;
