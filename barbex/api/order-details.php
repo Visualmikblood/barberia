@@ -23,10 +23,10 @@ if (!$order_id) {
 $query = "SELECT o.*, COUNT(oi.id) as item_count
           FROM orders o
           LEFT JOIN order_items oi ON o.id = oi.order_id
-          WHERE o.id = :order_id AND o.user_id = :user_id
+          WHERE o.id = :order_id
           GROUP BY o.id";
 $stmt = $db->prepare($query);
-$stmt->execute(['order_id' => $order_id, 'user_id' => $_SESSION['user_id']]);
+$stmt->execute(['order_id' => $order_id]);
 $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {

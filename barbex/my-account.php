@@ -17,19 +17,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
     $name = trim($_POST['name']);
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
+    $profile_image = '';
+
+    // Handle profile image upload
+    if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = 'assets/img/profiles/';
+
+        // Create directory if it doesn't exist
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        $file_name = $_FILES['profile_image']['name'];
+        $file_tmp = $_FILES['profile_image']['tmp_name'];
+        $file_size = $_FILES['profile_image']['size'];
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+        // Validate file type and size
+        $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
+        $max_size = 2 * 1024 * 1024; // 2MB
+
+        if (in_array($file_ext, $allowed_ext) && $file_size <= $max_size) {
+            // Generate unique filename
+            $new_filename = 'profile_' . $_SESSION['user_id'] . '_' . time() . '.' . $file_ext;
+            $upload_path = $upload_dir . $new_filename;
+
+            if (move_uploaded_file($file_tmp, $upload_path)) {
+                $profile_image = $new_filename;
+
+                // Delete old profile image if exists
+                if (!empty($user['profile_image'])) {
+                    $old_file = $upload_dir . $user['profile_image'];
+                    if (file_exists($old_file)) {
+                        unlink($old_file);
+                    }
+                }
+            } else {
+                $message = '<div class="alert alert-danger">Error al subir la imagen</div>';
+            }
+        } else {
+            $message = '<div class="alert alert-danger">Tipo de archivo no válido o archivo demasiado grande (máx. 2MB)</div>';
+        }
+    }
 
     if (!empty($name)) {
-        $query = "UPDATE users SET name = :name, phone = :phone, address = :address WHERE id = :id";
-        $stmt = $db->prepare($query);
-        $stmt->execute([
+        // Always include profile_image in the query, even if empty
+        $query = "UPDATE users SET name = :name, phone = :phone, address = :address, profile_image = :profile_image WHERE id = :id";
+        $params = [
             'name' => $name,
             'phone' => $phone,
             'address' => $address,
+            'profile_image' => $profile_image ?: null, // Use null if no image
             'id' => $_SESSION['user_id']
-        ]);
+        ];
 
-        $_SESSION['user_name'] = $name; // Update session name
-        $message = '<div class="alert alert-success">Perfil actualizado correctamente</div>';
+        try {
+            $stmt = $db->prepare($query);
+            $result = $stmt->execute($params);
+
+            if ($result) {
+                $_SESSION['user_name'] = $name; // Update session name
+                $message = '<div class="alert alert-success">Perfil actualizado correctamente</div>';
+
+                // Re-fetch user data to reflect changes
+                $query = "SELECT * FROM users WHERE id = :id";
+                $stmt = $db->prepare($query);
+                $stmt->execute(['id' => $_SESSION['user_id']]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                $message = '<div class="alert alert-danger">Error al actualizar el perfil. Inténtalo de nuevo.</div>';
+            }
+        } catch (Exception $e) {
+            error_log("Database error: " . $e->getMessage());
+            $message = '<div class="alert alert-danger">Error al actualizar el perfil: ' . $e->getMessage() . '</div>';
+        }
     } else {
         $message = '<div class="alert alert-danger">El nombre es obligatorio</div>';
     }
@@ -157,10 +218,38 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="header__area-menubar-right two">
                         <div class="header__area-menubar-right-menu menu-responsive">
                             <ul id="mobilemenu">
-                                <li><a href="index.php">Inicio</a></li>
-                                <li><a href="product-page.php">Productos</a></li>
-                                <li><a href="services.html">Servicios</a></li>
-                                <li><a href="contact.html">Contacto</a></li>
+                                <li class="menu-item-has-children"><a href="#">Home</a>
+                                    <ul class="sub-menu">
+                                        <li><a href="index.php">Home 01</a></li>
+                                        <li><a href="index-2.html">Home 02</a></li>
+                                        <li><a href="index-3.html">Home 03</a></li>
+                                    </ul>
+                                </li>
+                                <li class="menu-item-has-children"><a href="#">Pages</a>
+                                    <ul class="sub-menu">
+                                        <li><a href="about.html">About</a></li>
+                                        <li><a href="price.html">Price</a></li>
+                                        <li><a href="team.html">Team</a></li>
+                                        <li><a href="services.html">Services</a></li>
+                                        <li><a href="services-details.html">Services Details</a></li>
+                                    </ul>
+                                </li>
+                                <li class="menu-item-has-children"><a href="#">Shop</a>
+                                    <ul class="sub-menu">
+                                        <li><a href="product-page.php">Product Page</a></li>
+                                        <li><a href="product-details.php">Product Details</a></li>
+                                        <li><a href="cart.php">Cart</a></li>
+                                        <li><a href="checkout.php">Checkout</a></li>
+                                    </ul>
+                                </li>
+                                <li class="menu-item-has-children"><a href="#">Blog</a>
+                                    <ul class="sub-menu">
+                                        <li><a href="blog-grid.html">Blog Grid</a></li>
+                                        <li><a href="blog-standard.html">Blog Standard</a></li>
+                                        <li><a href="blog-details.html">Blog Details</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="contact.html">Contact</a></li>
                             </ul>
                         </div>
                     </div>
@@ -210,16 +299,16 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="account-sidebar">
                         <h5>Hola, <?php echo htmlspecialchars($user['name']); ?>!</h5>
                         <nav class="nav flex-column">
-                            <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                            <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard', this)">
                                 <i class="fas fa-tachometer-alt"></i> Dashboard
                             </a>
-                            <a class="nav-link" href="#orders" onclick="showSection('orders')">
+                            <a class="nav-link" href="#orders" onclick="showSection('orders', this)">
                                 <i class="fas fa-shopping-bag"></i> Mis Pedidos
                             </a>
-                            <a class="nav-link" href="#profile" onclick="showSection('profile')">
+                            <a class="nav-link" href="#profile" onclick="showSection('profile', this)">
                                 <i class="fas fa-user"></i> Mi Perfil
                             </a>
-                            <a class="nav-link" href="#password" onclick="showSection('password')">
+                            <a class="nav-link" href="#password" onclick="showSection('password', this)">
                                 <i class="fas fa-key"></i> Cambiar Contraseña
                             </a>
                             <a class="nav-link" href="logout.php">
@@ -319,8 +408,42 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
                         <!-- Profile Section -->
                         <div id="profile-section" class="account-section" style="display: none;">
                             <h4>Mi Perfil</h4>
-                            <form method="POST" class="mt-4">
+                            <form method="POST" enctype="multipart/form-data" class="mt-4">
                                 <input type="hidden" name="update_profile" value="1">
+
+                                <!-- Profile Image Section -->
+                                <div class="text-center mb-4">
+                                    <div class="profile-image-container">
+                                        <?php if (!empty($user['profile_image'])): ?>
+                                            <img src="assets/img/profiles/<?php echo htmlspecialchars($user['profile_image']); ?>"
+                                                 alt="Foto de perfil" class="profile-image rounded-circle"
+                                                 style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #667eea;">
+                                        <?php else: ?>
+                                            <div class="profile-placeholder rounded-circle d-inline-flex align-items-center justify-content-center"
+                                                 style="width: 120px; height: 120px; background: #f8f9fa; border: 3px solid #667eea;">
+                                                <i class="fas fa-user fa-3x text-muted"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="mt-3">
+                                        <label for="profile_image" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-camera"></i> Cambiar Foto
+                                        </label>
+                                        <input type="file" id="profile_image" name="profile_image" class="d-none"
+                                               accept="image/*" onchange="previewImage(this)">
+                                        <small class="text-muted d-block mt-1">Formatos: JPG, PNG, GIF. Máx: 2MB</small>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-info">
+                                            <?php if (!empty($user['profile_image'])): ?>
+                                                <i class="fas fa-check-circle"></i> Foto de perfil subida
+                                            <?php else: ?>
+                                                <i class="fas fa-info-circle"></i> No tienes foto de perfil
+                                            <?php endif; ?>
+                                        </small>
+                                    </div>
+                                </div>
+
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Nombre Completo *</label>
@@ -416,7 +539,7 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="assets/js/jquery-3.6.0.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
     <script>
-        function showSection(sectionName) {
+        function showSection(sectionName, clickedElement = null) {
             // Hide all sections
             document.querySelectorAll('.account-section').forEach(section => {
                 section.style.display = 'none';
@@ -429,7 +552,17 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
             document.querySelectorAll('.account-sidebar .nav-link').forEach(link => {
                 link.classList.remove('active');
             });
-            event.target.classList.add('active');
+
+            // Set active class on clicked element or find the corresponding nav link
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+            } else {
+                // Find the nav link that corresponds to the section
+                const navLink = document.querySelector(`.account-sidebar .nav-link[href="#${sectionName}"]`);
+                if (navLink) {
+                    navLink.classList.add('active');
+                }
+            }
         }
 
         function viewOrderDetails(orderId) {
@@ -444,6 +577,40 @@ $orders = $orders_stmt->fetchAll(PDO::FETCH_ASSOC);
                     console.error('Error loading order details:', error);
                     alert('Error al cargar los detalles del pedido');
                 });
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+
+                // Validate file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('El archivo es demasiado grande. Máximo 2MB.');
+                    input.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Tipo de archivo no válido. Solo se permiten JPG, PNG y GIF.');
+                    input.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Update the profile image preview
+                    const container = document.querySelector('.profile-image-container');
+                    if (container.querySelector('.profile-image')) {
+                        container.querySelector('.profile-image').src = e.target.result;
+                    } else if (container.querySelector('.profile-placeholder')) {
+                        // Replace placeholder with actual image
+                        container.innerHTML = '<img src="' + e.target.result + '" alt="Vista previa" class="profile-image rounded-circle" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #667eea;">';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         // Show dashboard by default

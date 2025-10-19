@@ -23,6 +23,7 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     address TEXT,
+    profile_image VARCHAR(255),
     role ENUM('customer', 'admin') DEFAULT 'customer',
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

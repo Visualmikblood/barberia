@@ -85,6 +85,9 @@
 										<li><a href="checkout.php">Checkout</a></li>
 									</ul>
 								</li>
+								<?php if (isset($_SESSION['user_id'])): ?>
+								<li><a href="my-account.php">Mi Cuenta</a></li>
+								<?php endif; ?>
 								<li class="menu-item-has-children"><a href="#">Blog</a>
 									<ul class="sub-menu">
 										<li><a href="blog-grid.html">Blog Grid</a></li>
