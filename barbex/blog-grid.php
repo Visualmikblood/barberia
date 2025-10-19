@@ -4,14 +4,35 @@ require_once 'config/database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-// Get blog posts from database
+// Pagination settings
+$posts_per_page = 9;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = max(1, $page); // Ensure page is at least 1
+$offset = ($page - 1) * $posts_per_page;
+
+// Get total posts count
+try {
+    $total_query = "SELECT COUNT(*) as total FROM blog_posts WHERE status = 'published'";
+    $total_stmt = $db->query($total_query);
+    $total_posts = $total_stmt->fetch()['total'];
+    $total_pages = ceil($total_posts / $posts_per_page);
+} catch (Exception $e) {
+    $total_posts = 0;
+    $total_pages = 0;
+}
+
+// Get blog posts for current page
 try {
     $query = "SELECT bp.*, u.name as author_name
               FROM blog_posts bp
               LEFT JOIN users u ON bp.author_id = u.id
               WHERE bp.status = 'published'
-              ORDER BY bp.created_at DESC";
-    $stmt = $db->query($query);
+              ORDER BY bp.created_at DESC
+              LIMIT :limit OFFSET :offset";
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(':limit', $posts_per_page, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $blog_posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
     $blog_posts = [];
@@ -194,14 +215,35 @@ try {
 				<div class="col-xl-12">
 					<div class="theme__pagination t-center mt-50">
 						<ul>
-							<li><a class="active" href="#">01</a>
-							</li>
-							<li><a href="#">02</a>
-							</li>
-							<li><a href="#"><i class="far fa-ellipsis-h"></i></a>
-							</li>
-							<li><a href="#">05</a>
-							</li>
+							<?php if ($page > 1): ?>
+								<li><a href="?page=<?php echo $page - 1; ?>"><i class="far fa-angle-left"></i></a></li>
+							<?php endif; ?>
+
+							<?php
+							$start_page = max(1, $page - 2);
+							$end_page = min($total_pages, $page + 2);
+
+							if ($start_page > 1): ?>
+								<li><a href="?page=1">1</a></li>
+								<?php if ($start_page > 2): ?>
+									<li><a href="#"><i class="far fa-ellipsis-h"></i></a></li>
+								<?php endif; ?>
+							<?php endif; ?>
+
+							<?php for ($i = $start_page; $i <= $end_page; $i++): ?>
+								<li><a href="?page=<?php echo $i; ?>" class="<?php echo ($i == $page) ? 'active' : ''; ?>"><?php echo $i; ?></a></li>
+							<?php endfor; ?>
+
+							<?php if ($end_page < $total_pages): ?>
+								<?php if ($end_page < $total_pages - 1): ?>
+									<li><a href="#"><i class="far fa-ellipsis-h"></i></a></li>
+								<?php endif; ?>
+								<li><a href="?page=<?php echo $total_pages; ?>"><?php echo $total_pages; ?></a></li>
+							<?php endif; ?>
+
+							<?php if ($page < $total_pages): ?>
+								<li><a href="?page=<?php echo $page + 1; ?>"><i class="far fa-angle-right"></i></a></li>
+							<?php endif; ?>
 						</ul>
 					</div>
 				</div>
