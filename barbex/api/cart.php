@@ -114,6 +114,28 @@ function handlePost($cart, $action) {
             echo json_encode($result);
             break;
 
+        case 'update':
+            if (!isset($data['product_id']) || !isset($data['quantity'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID de producto y cantidad requeridos']);
+                return;
+            }
+
+            $result = $cart->updateQuantity($data['product_id'], (int)$data['quantity']);
+            echo json_encode($result);
+            break;
+
+        case 'remove':
+            if (!isset($data['product_id'])) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID de producto requerido']);
+                return;
+            }
+
+            $result = $cart->removeFromCart($data['product_id']);
+            echo json_encode($result);
+            break;
+
         case 'clear':
             $result = $cart->clearCart();
             echo json_encode($result);

@@ -335,8 +335,6 @@
 
 			init() {
 				console.log('Loading cart page...');
-				this.loadCart();
-				console.log('Cart loaded:', this.cart);
 
 				// Clear any old cart data that might be conflicting
 				const oldKeys = ['cart', 'barbex_cart', 'shopping_cart'];
@@ -347,10 +345,59 @@
 					}
 				});
 
-				this.renderCart();
-				this.updateCartCount();
-				this.bindEvents();
-				console.log('Cart page ready');
+				// Load cart from database first, then render
+				this.loadCartFromDatabase().then(() => {
+					console.log('Cart loaded from database:', this.cart);
+					this.renderCart();
+					this.updateCartCount();
+					this.bindEvents();
+					console.log('Cart page ready');
+				}).catch(error => {
+					console.error('Error loading cart:', error);
+					this.renderCart();
+					this.updateCartCount();
+					this.bindEvents();
+				});
+			}
+
+			loadCartFromDatabase() {
+				console.log('=== LOADING CART FROM DATABASE ===');
+
+				return fetch('/api/cart.php?action=get', {
+					credentials: 'include'
+				})
+				.then(response => response.json())
+				.then(data => {
+					console.log('Database cart data:', data);
+					// Siempre limpiar el carrito local primero
+					this.cart = [];
+					this.saveCart();
+					this.updateCartCount();
+
+					if (data.success && data.data && data.data.items && data.data.items.length > 0) {
+						// Sincronizar localStorage con datos de BD
+						this.cart = data.data.items.map(item => ({
+							id: item.product_id,
+							name: item.name,
+							price: parseFloat(item.price),
+							image: item.image,
+							quantity: item.quantity
+						}));
+						this.saveCart();
+						this.updateCartCount();
+						console.log('✅ Cart loaded from database:', this.cart.length, 'items');
+					} else {
+						console.log('No cart data in database, local cart remains empty');
+					}
+				})
+				.catch(error => {
+					console.error('❌ Error loading cart from database:', error);
+					// En caso de error, limpiar el carrito local
+					this.cart = [];
+					this.saveCart();
+					this.updateCartCount();
+					throw error; // Re-throw to handle in the calling code
+				});
 			}
 
 			loadCart() {
@@ -563,6 +610,10 @@
 					console.log('Updating quantity for item', index, 'from', this.cart[index].quantity, 'to', newQuantity);
 					this.cart[index].quantity = Math.max(1, newQuantity);
 					this.saveCart();
+
+					// Sync with database
+					this.syncQuantityWithDatabase(this.cart[index].id, newQuantity);
+
 					this.renderCart();
 					this.updateCartCount();
 					console.log('Quantity updated successfully');
@@ -574,6 +625,10 @@
 			removeItem(index) {
 				if (index >= 0 && index < this.cart.length) {
 					console.log('Removing item at index', index, ':', this.cart[index].name);
+
+					// Sync removal with database
+					this.syncRemovalWithDatabase(this.cart[index].id);
+
 					this.cart.splice(index, 1);
 					this.saveCart();
 					this.renderCart();
@@ -582,6 +637,63 @@
 				} else {
 					console.log('Invalid index for item removal:', index);
 				}
+			}
+
+			syncQuantityWithDatabase(productId, quantity) {
+				console.log('=== SYNCING QUANTITY WITH DATABASE ===');
+				console.log('Product ID:', productId, 'Quantity:', quantity);
+
+				fetch('/api/cart.php?action=update', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify({
+						product_id: productId,
+						quantity: quantity
+					})
+				})
+				.then(response => response.json())
+				.then(data => {
+					console.log('Database quantity sync result:', data);
+					if (data.success) {
+						console.log('✅ Quantity synced with database');
+					} else {
+						console.error('❌ Database quantity sync failed:', data.message);
+					}
+				})
+				.catch(error => {
+					console.error('❌ Database quantity sync error:', error);
+				});
+			}
+
+			syncRemovalWithDatabase(productId) {
+				console.log('=== SYNCING REMOVAL WITH DATABASE ===');
+				console.log('Product ID:', productId);
+
+				fetch('/api/cart.php?action=remove', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify({
+						product_id: productId
+					})
+				})
+				.then(response => response.json())
+				.then(data => {
+					console.log('Database removal sync result:', data);
+					if (data.success) {
+						console.log('✅ Item removal synced with database');
+					} else {
+						console.error('❌ Database removal sync failed:', data.message);
+					}
+				})
+				.catch(error => {
+					console.error('❌ Database removal sync error:', error);
+				});
 			}
 		}
 
