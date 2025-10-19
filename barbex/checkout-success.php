@@ -21,6 +21,11 @@ if (isset($_GET['order_id'])) {
     $items_stmt = $db->prepare($items_query);
     $items_stmt->execute(['order_id' => $order_id]);
     $order_items = $items_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Debug: Log order items
+    error_log("Order ID: $order_id");
+    error_log("Order items count: " . count($order_items));
+    error_log("Order items: " . json_encode($order_items));
 }
 ?>
 <!DOCTYPE html>
