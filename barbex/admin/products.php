@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $description = trim($_POST['description']);
         $price = floatval($_POST['price']);
         $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
-        $category = trim($_POST['category']);
+        $category_id = intval($_POST['category_id']);
         $stock = intval($_POST['stock']);
         $sku = trim($_POST['sku']);
         $stock_status = $_POST['stock_status'] ?? 'instock';
@@ -77,14 +77,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (empty($name) || $price <= 0 || empty($sku)) {
             $message = '<div class="alert alert-danger">Nombre, precio y SKU son obligatorios</div>';
         } else {
-            $query = "INSERT INTO products (name, short_description, description, price, sale_price, category, stock, sku, stock_status, weight, dimensions, brand, tags, image, gallery_images, featured) VALUES (:name, :short_description, :description, :price, :sale_price, :category, :stock, :sku, :stock_status, :weight, :dimensions, :brand, :tags, :image, :gallery_images, :featured)";
+            $query = "INSERT INTO products (name, short_description, description, price, sale_price, category_id, stock, sku, stock_status, weight, dimensions, brand, tags, image, gallery_images, featured) VALUES (:name, :short_description, :description, :price, :sale_price, :category_id, :stock, :sku, :stock_status, :weight, :dimensions, :brand, :tags, :image, :gallery_images, :featured)";
             $stmt = $db->prepare($query);
             $stmt->bindParam(":name", $name);
             $stmt->bindParam(":short_description", $short_description);
             $stmt->bindParam(":description", $description);
             $stmt->bindParam(":price", $price);
             $stmt->bindParam(":sale_price", $sale_price);
-            $stmt->bindParam(":category", $category);
+            $stmt->bindParam(":category_id", $category_id);
             $stmt->bindParam(":stock", $stock);
             $stmt->bindParam(":sku", $sku);
             $stmt->bindParam(":stock_status", $stock_status);
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $description = trim($_POST['description']);
         $price = floatval($_POST['price']);
         $sale_price = !empty($_POST['sale_price']) ? floatval($_POST['sale_price']) : null;
-        $category = trim($_POST['category']);
+        $category_id = intval($_POST['category_id']);
         $stock = intval($_POST['stock']);
         $sku = trim($_POST['sku']);
         $stock_status = $_POST['stock_status'] ?? 'instock';
@@ -166,14 +166,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if (empty($name) || $price <= 0 || empty($sku)) {
             $message = '<div class="alert alert-danger">Nombre, precio y SKU son obligatorios</div>';
         } else {
-            $query = "UPDATE products SET name = :name, short_description = :short_description, description = :description, price = :price, sale_price = :sale_price, category = :category, stock = :stock, sku = :sku, stock_status = :stock_status, weight = :weight, dimensions = :dimensions, brand = :brand, tags = :tags, image = :image, gallery_images = :gallery_images, featured = :featured, status = :status WHERE id = :id";
+            $query = "UPDATE products SET name = :name, short_description = :short_description, description = :description, price = :price, sale_price = :sale_price, category_id = :category_id, stock = :stock, sku = :sku, stock_status = :stock_status, weight = :weight, dimensions = :dimensions, brand = :brand, tags = :tags, image = :image, gallery_images = :gallery_images, featured = :featured, status = :status WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->bindParam(":name", $name);
             $stmt->bindParam(":short_description", $short_description);
             $stmt->bindParam(":description", $description);
             $stmt->bindParam(":price", $price);
             $stmt->bindParam(":sale_price", $sale_price);
-            $stmt->bindParam(":category", $category);
+            $stmt->bindParam(":category_id", $category_id);
             $stmt->bindParam(":stock", $stock);
             $stmt->bindParam(":sku", $sku);
             $stmt->bindParam(":stock_status", $stock_status);
@@ -370,14 +370,20 @@ if ($action == 'edit' && isset($_GET['id'])) {
                                     <div class="col-md-4">
                                         <div class="mb-3">
                                             <label class="form-label">Categoría</label>
-                                            <select class="form-control" name="category">
+                                            <select class="form-control" name="category_id">
                                                 <option value="">Seleccionar categoría</option>
-                                                <option value="Face Wash" <?php echo ($edit_product['category'] ?? '') == 'Face Wash' ? 'selected' : ''; ?>>Face Wash</option>
-                                                <option value="Face Cream" <?php echo ($edit_product['category'] ?? '') == 'Face Cream' ? 'selected' : ''; ?>>Face Cream</option>
-                                                <option value="Hair Care" <?php echo ($edit_product['category'] ?? '') == 'Hair Care' ? 'selected' : ''; ?>>Hair Care</option>
-                                                <option value="Beard Care" <?php echo ($edit_product['category'] ?? '') == 'Beard Care' ? 'selected' : ''; ?>>Beard Care</option>
-                                                <option value="Hair Styling" <?php echo ($edit_product['category'] ?? '') == 'Hair Styling' ? 'selected' : ''; ?>>Hair Styling</option>
-                                                <option value="Face Care" <?php echo ($edit_product['category'] ?? '') == 'Face Care' ? 'selected' : ''; ?>>Face Care</option>
+                                                <?php
+                                                // Get categories from database
+                                                $cat_query = "SELECT id, name FROM categories WHERE status = 'active' ORDER BY name";
+                                                $cat_stmt = $db->prepare($cat_query);
+                                                $cat_stmt->execute();
+                                                $categories = $cat_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                                                foreach ($categories as $cat) {
+                                                    $selected = ($edit_product['category_id'] ?? '') == $cat['id'] ? 'selected' : '';
+                                                    echo "<option value=\"{$cat['id']}\" {$selected}>{$cat['name']}</option>";
+                                                }
+                                                ?>
                                             </select>
                                         </div>
                                     </div>
@@ -533,7 +539,19 @@ if ($action == 'edit' && isset($_GET['id'])) {
                                             </td>
                                             <td><?php echo htmlspecialchars($product['name']); ?></td>
                                             <td><?php echo htmlspecialchars($product['sku']); ?></td>
-                                            <td><?php echo htmlspecialchars($product['category']); ?></td>
+                                            <td>
+                                                <?php
+                                                if ($product['category_id']) {
+                                                    $cat_query = "SELECT name FROM categories WHERE id = :id";
+                                                    $cat_stmt = $db->prepare($cat_query);
+                                                    $cat_stmt->execute(['id' => $product['category_id']]);
+                                                    $cat = $cat_stmt->fetch(PDO::FETCH_ASSOC);
+                                                    echo htmlspecialchars($cat['name'] ?? 'Sin categoría');
+                                                } else {
+                                                    echo htmlspecialchars($product['category'] ?? 'Sin categoría');
+                                                }
+                                                ?>
+                                            </td>
                                             <td>
                                                 $<?php echo number_format($product['price'], 2); ?>
                                                 <?php if ($product['sale_price']): ?>
